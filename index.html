@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام عيادة الأسنان الذكي | Smart Dental Clinic</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Cairo & Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+            background-color: #f0fdfa; /* Soft medical teal/white background */
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0d9488;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col pb-12">
+
+    <!-- Top Alert Banner for Backup Reminder (Shows if last backup > 3 days) -->
+    <div id="backup-reminder-banner" class="hidden bg-amber-500 text-white text-center py-2.5 px-4 font-semibold text-sm flex items-center justify-center gap-2 sticky top-0 z-50 shadow-md">
+        <i class="fa-solid fa-triangle-exclamation text-base"></i>
+        <span data-i18n="backup_banner_text">تنبيه: لم تقم بحفظ وتصدير نسخة احتياطية من المواعيد منذ 3 أيام! يرجى تصدير البيانات لحمايتها.</span>
+        <button onclick="exportBackupData()" class="bg-white text-amber-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-slate-100 transition mr-2">
+            <i class="fa-solid fa-download ml-1"></i> <span data-i18n="save_now">حفظ الآن</span>
+        </button>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="bg-gradient-to-r from-teal-600 to-cyan-700 text-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-2.5 rounded-full border border-white/20">
+                    <i class="fa-solid fa-tooth text-3xl text-teal-100 animate-bounce"></i>
+                </div>
+                <div>
+                    <h1 id="app-main-title" class="text-xl sm:text-2xl font-bold tracking-tight" data-i18n="app_title">قاعدة بيانات عيادتي الذكية</h1>
+                    <p id="app-main-subtitle" class="text-xs text-teal-100 font-light" data-i18n="app_subtitle">نظام إدارة ميسر بلمسة الذكاء الاصطناعي الصوتي</p>
+                </div>
+            </div>
+            
+            <!-- Live Time & Dual Dates Widget -->
+            <div class="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-center md:text-right min-w-[220px]">
+                <div class="flex items-center justify-center md:justify-start gap-2 text-teal-200">
+                    <i class="fa-regular fa-clock text-sm"></i>
+                    <span id="live-clock" class="font-bold text-base tracking-wider">00:00:00</span>
+                </div>
+                <div class="text-[11px] text-teal-100/90 mt-1 space-y-0.5">
+                    <div id="gregorian-date">--/--/----</div>
+                    <div id="hijri-date" class="text-cyan-200 font-medium">--/--/----</div>
+                </div>
+            </div>
+
+            <!-- Controls and Languages Switcher -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Language Switcher Button -->
+                <button onclick="toggleLanguage()" class="bg-white text-teal-700 font-bold px-3.5 py-2 rounded-xl text-sm transition shadow-sm hover:bg-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-globe"></i>
+                    <span id="lang-btn-text">English</span>
+                </button>
+
+                <!-- Backup Actions -->
+                <button onclick="exportBackupData()" class="bg-teal-500 hover:bg-teal-400 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow-sm border border-teal-400/30">
+                    <i class="fa-solid fa-file-export"></i>
+                    <span data-i18n="export">حفظ وتصدير</span>
+                </button>
+                <button onclick="triggerFileInput()" class="bg-slate-800/40 hover:bg-slate-800/60 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 border border-white/10">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span data-i18n="import">استيراد</span>
+                </button>
+                <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="importBackupData(event)">
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto px-4 mt-6 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Metrics & Add Appointment -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- Daily Stats Widget -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-teal-100 flex flex-col gap-4">
+                <h3 class="text-md font-bold text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-simple text-teal-600"></i>
+                    <span data-i18n="clinic_stats">نشاط العيادة اليوم</span>
+                </h3>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span id="patient-count-badge" class="text-4xl font-extrabold text-teal-600">0</span>
+                        <span class="text-slate-400 font-bold text-sm mr-1" data-i18n="registered_today">مرضى مسجلين اليوم</span>
+                        <p class="text-xs text-slate-500 mt-1" id="stat-subtext" data-i18n="ready_welcome">العيادة جاهزة لاستقبال المرضى</p>
+                    </div>
+                    <div class="bg-teal-50 p-3 rounded-2xl text-teal-600">
+                        <i class="fa-solid fa-hospital-user text-3xl"></i>
+                    </div>
+                </div>
+
+                <!-- Last Backup indicator -->
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                    <span data-i18n="last_backup_lbl">آخر تصدير احتياطي:</span>
+                    <span id="last-backup-text" class="font-bold text-teal-700" data-i18n="not_saved_yet">لم يتم الحفظ بعد</span>
+                </div>
+            </div>
+
+            <!-- Voice Assistant Control Card -->
+            <div class="bg-gradient-to-br from-teal-900 to-cyan-950 text-white p-5 rounded-2xl shadow-md border border-teal-800 space-y-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="bg-cyan-500/20 text-cyan-300 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider" data-i18n="smart_feature">ميزة ذكية</span>
+                        <h3 class="text-lg font-bold mt-1.5 flex items-center gap-2 text-white">
+                            <i class="fa-solid fa-microphone text-cyan-400"></i>
+                            <span data-i18n="voice_assistant_title">مساعد العيادة الصوتي (Gemini)</span>
+                        </h3>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-teal-300">
+                        <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-teal-100/80 leading-relaxed" data-i18n="voice_desc">
+                    وفر وقتك وسجل المريض بصوتك فوراً مع تحديد السن المطلوب، أو دع الذكاء الاصطناعي يقرأ لك جدول مواعيد اليوم بوضوح كامل!
+                </p>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="openVoiceDictationModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-900 px-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-lg">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span data-i18n="dictate_btn">إملاء موعد بالصوت</span>
+                    </button>
+                    <button onclick="speakTodaySchedule()" id="read-schedule-btn" class="bg-teal-500 hover:bg-teal-400 text-white px-3 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-lg">
+                        <i class="fa-solid fa-volume-high" id="read-icon"></i>
+                        <span id="read-text" data-i18n="read_schedule_btn">قراءة مواعيد اليوم</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Add Patient Form Card -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-teal-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="form-title" class="text-md font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-user-plus text-teal-600" id="form-icon"></i>
+                        <span data-i18n="add_new_appointment">إضافة موعد جديد</span>
+                    </h3>
+                    <button id="cancel-edit-btn" onclick="resetForm()" class="hidden text-xs text-rose-500 hover:underline" data-i18n="cancel_edit">
+                        إلغاء التعديل
+                    </button>
+                </div>
+
+                <form id="appointment-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                    <input type="hidden" id="edit-id">
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1" for="patient-name" data-i18n="patient_name_lbl">اسم المريض *</label>
+                        <input type="text" id="patient-name" required placeholder="أحمد محمد علي..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-slate-50/50">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1" for="appointment-date" data-i18n="appointment_date_lbl">تاريخ الموعد *</label>
+                            <input type="date" id="appointment-date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-slate-50/50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1" for="appointment-time" data-i18n="appointment_time_lbl">الوقت *</label>
+                            <input type="time" id="appointment-time" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-slate-50/50">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1" for="patient-phone" data-i18n="patient_phone_lbl">رقم الهاتف (اختياري)</label>
+                        <input type="tel" id="patient-phone" placeholder="05xxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-slate-50/50">
+                    </div>
+
+                    <!-- Professional Tooth Location Selector -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1" for="tooth-quadrant" data-i18n="tooth_quadrant_lbl">منطقة السن / الفك</label>
+                            <select id="tooth-quadrant" class="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-slate-50/50">
+                                <option value="" data-i18n="quad_unspecified">غير محدد</option>
+                                <option value="علوي أيمن" data-i18n="quad_upper_right">الفك العلوي - الأيمن</option>
+                                <option value="علوي أيسر" data-i18n="quad_upper_left">الفك العلوي - الأيسر</option>
+                                <option value="سفلي أيمن" data-i18n="quad_lower_right">الفك السفلي - الأيمن</option>
+                                <option value="سفلي أيسر" data-i18n="quad_lower_left">الفك السفلي - الأيسر</option>
+                                <option value="عام" data-i18n="quad_general">كامل الفم / تنظيف عام</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1" for="tooth-number" data-i18n="tooth_number_lbl">رقم السن (FDI / اسم)</label>
+                            <input type="text" id="tooth-number" placeholder="مثال: 16 أو الضاحك" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-slate-50/50">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1" for="patient-treatment" data-i18n="patient_treatment_lbl">نوع العلاج / الإجراء</label>
+                        <select id="patient-treatment" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-slate-50/50">
+                            <option value="فحص وتشخيص" data-i18n="treat_check">فحص وتشخيص</option>
+                            <option value="علاج عصب" data-i18n="treat_nerve">علاج عصب (سحب عصب)</option>
+                            <option value="حشوة تجميلية" data-i18n="treat_fill">حشوة تجميلية</option>
+                            <option value="تنظيف ولثة" data-i18n="treat_clean">تنظيف أسنان وتجريف لثة</option>
+                            <option value="تقويم أسنان" data-i18n="treat_ortho">متابعة تقويم أسنان</option>
+                            <option value="قلع سن" data-i18n="treat_extract">خلع / قلع سن</option>
+                            <option value="أخرى" data-i18n="treat_other">إجراء آخر</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1" for="appointment-notes" data-i18n="medical_notes_lbl">ملاحظات طبية</label>
+                        <textarea id="appointment-notes" rows="2" placeholder="حالة مستعجلة، حساسية تخدير..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-slate-50/50"></textarea>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span id="submit-btn-text" data-i18n="add_to_schedule">إضافة للجدول</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Interactive Schedule & Full View -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Quick Date Filter Bar & Search -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-teal-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <span class="text-sm font-bold text-slate-600 shrink-0" data-i18n="view_appointments_date">عرض مواعيد يوم:</span>
+                    <input type="date" id="schedule-date-filter" onchange="filterAppointments()" class="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50">
+                    <button onclick="setFilterToToday()" class="bg-teal-50 hover:bg-teal-100 text-teal-700 px-3 py-2 rounded-xl text-xs font-bold transition border border-teal-200/50" data-i18n="today_btn">
+                        اليوم
+                    </button>
+                </div>
+
+                <div class="relative w-full md:w-64">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="schedule-search" oninput="filterAppointments()" placeholder="ابحث باسم المريض أو هاتف أو سن..." class="w-full pr-9 pl-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50">
+                </div>
+            </div>
+
+            <!-- Patient Schedule Main List -->
+            <div class="bg-white rounded-2xl shadow-sm border border-teal-100 overflow-hidden">
+                <div class="bg-slate-50/80 px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-slate-700 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-day text-teal-600"></i>
+                            <span data-i18n="clinic_appointments">مواعيد العيادة</span>
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5" id="current-filtered-date-label" data-i18n="today_date_lbl">تاريخ اليوم</p>
+                    </div>
+                    <span class="bg-teal-100 text-teal-800 text-xs font-bold px-3 py-1 rounded-full" id="filtered-count">
+                        0 <span data-i18n="appointments_cnt">مواعيد</span>
+                    </span>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="p-12 text-center hidden">
+                    <div class="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4 text-teal-500">
+                        <i class="fa-solid fa-calendar-xmark text-2xl"></i>
+                    </div>
+                    <h3 class="text-slate-600 font-bold mb-1" data-i18n="no_appointments">لا يوجد مواعيد مسجلة في هذا التاريخ</h3>
+                    <p class="text-slate-400 text-xs max-w-sm mx-auto" data-i18n="no_app_desc">أضف مريضاً جديداً من القائمة الجانبية أو عبر المساعد الصوتي لبدء ملء جدول المواعيد.</p>
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold tracking-wider">
+                                <th class="py-3.5 px-5" data-i18n="col_time">الوقت</th>
+                                <th class="py-3.5 px-5" data-i18n="col_name">اسم المريض</th>
+                                <th class="py-3.5 px-5" data-i18n="col_phone">رقم الهاتف</th>
+                                <th class="py-3.5 px-5" data-i18n="col_tooth">موقع السن</th>
+                                <th class="py-3.5 px-5" data-i18n="col_treatment">العلاج</th>
+                                <th class="py-3.5 px-5" data-i18n="col_notes">الملاحظات</th>
+                                <th class="py-3.5 px-5 text-center" data-i18n="col_actions">خيارات والبطاقة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointment-table-body" class="divide-y divide-slate-100 text-sm text-slate-700">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card List View -->
+                <div id="appointment-cards-container" class="block md:hidden p-4 space-y-3">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Patient Card Modal Window -->
+    <div id="patient-card-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-gradient-to-tr from-slate-100 to-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-teal-50/50 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200/60">
+                <h3 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-address-card text-teal-600"></i>
+                    <span data-i18n="card_modal_title">تفاصيل بطاقة الموعد للمريض</span>
+                </h3>
+                <button onclick="closePatientCardModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Hint for dentist -->
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs text-amber-800 flex items-start gap-2 leading-relaxed">
+                <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 shrink-0 text-sm"></i>
+                <p>
+                    <strong data-i18n="card_hint_title">💡 نصيحة الطبيب الذكي:</strong> <span data-i18n="card_hint_desc">يمكنك التقاط لقطة شاشة (Screenshot) للبطاقة الأنيقة أدناه وإرسالها للمريض مباشرة عبر WhatsApp لتأكيد موعده!</span>
+                </p>
+            </div>
+
+            <!-- Beautiful Printable/Screenshot Card Content Area -->
+            <div id="patient-ticket-view" class="bg-white rounded-2xl border-2 border-dashed border-teal-500 p-5 shadow-inner relative overflow-hidden">
+                <!-- Decorative Elements -->
+                <div class="absolute -top-6 -right-6 w-16 h-16 bg-teal-500/10 rounded-full"></div>
+                <div class="absolute -bottom-6 -left-6 w-16 h-16 bg-cyan-500/10 rounded-full"></div>
+                
+                <!-- Ticket Header -->
+                <div class="flex items-center justify-between border-b pb-3 mb-4 border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-tooth text-teal-600 text-2xl"></i>
+                        <div>
+                            <h4 class="font-extrabold text-sm text-slate-800" data-i18n="clinic_dept_name">عيادة طب الأسنان التخصصية</h4>
+                            <p class="text-[10px] text-slate-400" data-i18n="patient_confirm_ticket">بطاقة تأكيد موعد مريض</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
+                </div>
+
+                <!-- Ticket Body Grid -->
+                <div class="space-y-3.5 text-xs text-slate-700">
+                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg">
+                        <span class="text-slate-400 font-semibold" data-i18n="card_p_name">اسم المريض:</span>
+                        <strong id="card-patient-name" class="text-sm text-slate-900 font-bold">---</strong>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-slate-50 p-2 rounded-lg flex flex-col gap-1">
+                            <span class="text-slate-400 font-semibold" data-i18n="card_p_date">تاريخ الموعد:</span>
+                            <strong id="card-patient-date" class="text-teal-800 font-bold">---</strong>
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded-lg flex flex-col gap-1">
+                            <span class="text-slate-400 font-semibold" data-i18n="card_p_time">الوقت الموعود:</span>
+                            <strong id="card-patient-time" class="text-teal-800 font-bold">---</strong>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-slate-50 p-2 rounded-lg flex flex-col gap-1">
+                            <span class="text-slate-400 font-semibold" data-i18n="card_p_treatment">الإجراء المطلوب:</span>
+                            <strong id="card-patient-treatment" class="text-slate-800 font-bold">---</strong>
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded-lg flex flex-col gap-1">
+                            <span class="text-slate-400 font-semibold" data-i18n="card_p_tooth">موضع السن المستهدف:</span>
+                            <strong id="card-patient-tooth" class="text-cyan-700 font-bold">---</strong>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 rounded-lg">
+                        <span class="text-slate-400 font-semibold block mb-1" data-i18n="card_p_notes_title">تعليمات وتوصيات طبية:</span>
+                        <p id="card-patient-notes" class="italic text-slate-600 text-[11px] leading-relaxed">---</p>
+                    </div>
+                </div>
+
+                <!-- Ticket Footer Message -->
+                <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <p class="text-[10px] text-slate-400 font-medium" data-i18n="card_footer_attend">يرجى الحضور قبل الموعد بـ 10 دقائق لضمان راحتكم.</p>
+                    <p class="text-[9px] text-teal-600/70 font-semibold mt-1" data-i18n="card_footer_wish">تمنياتنا لكم بابتسامة دائمة وصحة وافرة ✨</p>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="grid grid-cols-2 gap-2 mt-5">
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-print"></i>
+                    <span data-i18n="print_card">طباعة البطاقة</span>
+                </button>
+                <button onclick="closePatientCardModal()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-xl text-xs transition" data-i18n="close_btn">
+                    موافق / إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Dictation Dialog/Modal -->
+    <div id="voice-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-teal-500/20 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-nodes text-cyan-500 animate-pulse"></i>
+                    <span data-i18n="voice_modal_header">المساعد الصوتي الذكي لحجز المواعيد</span>
+                </h3>
+                <button onclick="closeVoiceDictationModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Dictation Status Indicator -->
+            <div class="bg-slate-50 rounded-2xl p-6 text-center border border-slate-100 mb-5 relative overflow-hidden">
+                <div id="voice-wave-container" class="h-12 flex items-center justify-center gap-1 mb-3 hidden">
+                    <span class="w-1.5 h-6 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                    <span class="w-1.5 h-10 bg-teal-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                    <span class="w-1.5 h-4 bg-cyan-500 rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                    <span class="w-1.5 h-8 bg-cyan-600 rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
+                    <span class="w-1.5 h-5 bg-teal-500 rounded-full animate-bounce" style="animation-delay: 0.5s"></span>
+                </div>
+                
+                <div id="mic-icon-large" class="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3 cursor-pointer hover:scale-105 transition">
+                    <i class="fa-solid fa-microphone text-2xl" id="modal-mic-glyph"></i>
+                </div>
+
+                <p id="voice-status" class="text-sm font-semibold text-slate-600" data-i18n="voice_status_click">انقر للبدء في الكلام...</p>
+                <p class="text-xs text-slate-400 mt-1" data-i18n="voice_desc_sub">يمكنك استخدام لغة دارجة طبيعية.</p>
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-cyan-50 p-3.5 rounded-xl border border-cyan-100">
+                    <span class="text-xs font-bold text-cyan-800 block mb-1" data-i18n="suggested_phrase_title">العبارات المقترحة مع السن:</span>
+                    <p id="suggested-voice-example" class="text-xs text-cyan-700 italic">"سجل مريض اسمه غسان موعده اليوم الساعة الرابعة لعلاج عصب للسن العلوي الأيمن رقم 14 وهاتفه 0599111222"</p>
+                </div>
+
+                <!-- Textarea showing captured transcript -->
+                <div class="hidden" id="transcript-container">
+                    <label class="block text-xs font-bold text-slate-500 mb-1" data-i18n="transcript_lbl">النص المستمع إليه:</label>
+                    <textarea id="voice-transcript" readonly class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" rows="3"></textarea>
+                </div>
+
+                <!-- AI parsed notification -->
+                <div id="ai-processing-status" class="hidden flex items-center justify-center gap-2 text-xs font-bold text-teal-600 py-1.5 animate-pulse">
+                    <i class="fa-solid fa-spinner animate-spin"></i>
+                    <span data-i18n="gemini_parsing_txt">يقوم Gemini بتحليل تفاصيل الموعد والسن وإضافته...</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="toggle-record-btn" onclick="toggleSpeechRecognition()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-play"></i>
+                        <span data-i18n="start_record">ابدأ التسجيل</span>
+                    </button>
+                    <button onclick="closeVoiceDictationModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition" data-i18n="close_btn">
+                        إغلاق
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom In-App Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-5 left-5 bg-slate-900 text-white py-3 px-5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-semibold max-w-sm border border-slate-800 transition-all duration-300 translate-y-20 opacity-0 z-50">
+        <div id="toast-icon" class="w-6 h-6 rounded-full flex items-center justify-center text-xs">
+            <!-- Icon sets dynamically -->
+        </div>
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- Audio Player (Hidden) for Gemini TTS -->
+    <audio id="tts-audio-player" class="hidden"></audio>
+
+    <script>
+        
+        // Multi-language Translation dictionary
+        const translations = {
+            ar: {
+                lang_btn: "English",
+                app_title: "قاعدة بيانات عيادتي الذكية",
+                app_subtitle: "نظام إدارة ميسر بلمسة الذكاء الاصطناعي الصوتي",
+                backup_banner_text: "تنبيه: لم تقم بحفظ وتصدير نسخة احتياطية من المواعيد منذ 3 أيام! يرجى تصدير البيانات لحمايتها.",
+                save_now: "حفظ الآن",
+                export: "حفظ وتصدير",
+                import: "استيراد",
+                clinic_stats: "نشاط العيادة اليوم",
+                registered_today: "مرضى مسجلين اليوم",
+                ready_welcome: "العيادة جاهزة لاستقبال المرضى",
+                active_clinic_msg: "العيادة في كامل نشاطها اليوم مع {count} مواعيد لليوم.",
+                last_backup_lbl: "آخر تصدير احتياطي:",
+                not_saved_yet: "لم يتم الحفظ بعد",
+                smart_feature: "ميزة ذكية",
+                voice_assistant_title: "مساعد العيادة الصوتي (Gemini)",
+                voice_desc: "وفر وقتك وسجل المريض بصوتك فوراً مع تحديد السن المطلوب، أو دع الذكاء الاصطناعي يقرأ لك جدول مواعيد اليوم بوضوح كامل!",
+                dictate_btn: "إملاء موعد بالصوت",
+                read_schedule_btn: "قراءة مواعيد اليوم",
+                reading_ai_voice: "جاري القراءة بصوت AI...",
+                activating_voice: "جاري تفعيل الصوت...",
+                add_new_appointment: "إضافة موعد جديد",
+                cancel_edit: "إلغاء التعديل",
+                patient_name_lbl: "اسم المريض *",
+                appointment_date_lbl: "تاريخ الموعد *",
+                appointment_time_lbl: "الوقت *",
+                patient_phone_lbl: "رقم الهاتف (اختياري)",
+                tooth_quadrant_lbl: "منطقة السن / الفك",
+                tooth_number_lbl: "رقم السن (FDI / اسم)",
+                patient_treatment_lbl: "نوع العلاج / الإجراء",
+                medical_notes_lbl: "ملاحظات طبية",
+                add_to_schedule: "إضافة للجدول",
+                view_appointments_date: "عرض مواعيد يوم:",
+                today_btn: "اليوم",
+                clinic_appointments: "مواعيد العيادة",
+                today_date_lbl: "تاريخ اليوم",
+                appointments_cnt: "مواعيد",
+                no_appointments: "لا يوجد مواعيد مسجلة في هذا التاريخ",
+                no_app_desc: "أضف مريضاً جديداً من القائمة الجانبية أو عبر المساعد الصوتي لبدء ملء جدول المواعيد.",
+                col_time: "الوقت",
+                col_name: "اسم المريض",
+                col_phone: "رقم الهاتف",
+                col_tooth: "موقع السن",
+                col_treatment: "العلاج",
+                col_notes: "الملاحظات",
+                col_actions: "خيارات والبطاقة",
+                card_modal_title: "تفاصيل بطاقة الموعد للمريض",
+                card_hint_title: "💡 نصيحة الطبيب الذكي:",
+                card_hint_desc: "يمكنك التقاط لقطة شاشة (Screenshot) للبطاقة الأنيقة أدناه وإرسالها للمريض مباشرة عبر WhatsApp لتأكيد موعده!",
+                clinic_dept_name: "عيادة طب الأسنان التخصصية",
+                patient_confirm_ticket: "بطاقة تأكيد موعد مريض",
+                card_p_name: "اسم المريض:",
+                card_p_date: "تاريخ الموعد:",
+                card_p_time: "الوقت الموعود:",
+                card_p_treatment: "الإجراء المطلوب:",
+                card_p_tooth: "موضع السن المستهدف:",
+                card_p_notes_title: "تعليمات وتوصيات طبية:",
+                card_footer_attend: "يرجى الحضور قبل الموعد بـ 10 دقائق لضمان راحتكم.",
+                card_footer_wish: "تمنياتنا لكم بابتسامة دائمة وصحة وافرة ✨",
+                print_card: "طباعة البطاقة",
+                close_btn: "موافق / إغلاق",
+                voice_modal_header: "المساعد الصوتي الذكي لحجز المواعيد",
+                voice_status_click: "انقر للبدء في الكلام...",
+                voice_desc_sub: "يمكنك استخدام لغة دارجة طبيعية.",
+                suggested_phrase_title: "العبارات المقترحة مع السن:",
+                voice_suggest_example: '"سجل مريض اسمه غسان موعده اليوم الساعة الرابعة لعلاج عصب للسن العلوي الأيمن رقم 14 وهاتفه 0599111222"',
+                transcript_lbl: "النص المستمع إليه:",
+                gemini_parsing_txt: "يقوم Gemini بتحليل تفاصيل الموعد والسن وإضافته...",
+                start_record: "ابدأ التسجيل",
+                stop_record: "إيقاف التسجيل",
+                listening_status: "أنا استمع إليك دكتور... تكلم الآن",
+                click_to_talk_again: "انقر للتحدث مجدداً...",
+                all_dates_registered: "كل التواريخ المسجلة",
+                unspecified_tooth: "غير محدد",
+                card_text_title: "البطاقة",
+                toast_db_load_err: "حدث خطأ أثناء تحميل البيانات المسبقة",
+                toast_form_req_err: "الرجاء ملء الحقول المطلوبة (الاسم، التاريخ، الوقت)",
+                toast_updated_sucess: "تم تحديث بيانات المريض بنجاح",
+                toast_add_success: "تم تسجيل الموعد الجديد بنجاح",
+                toast_removed_msg: "تم إزالة الموعد المختار",
+                toast_backup_ok: "تم حفظ وتصدير قاعدة البيانات بنجاح!",
+                toast_backup_err: "فشل تصدير البيانات الاحتياطية",
+                toast_import_ok: "تم استيراد قاعدة البيانات الاحتياطية بنجاح",
+                toast_import_err: "تنسيق الملف غير صالح!",
+                toast_import_read_err: "حدث خطأ أثناء قراءة ملف النسخة الاحتياطية",
+                toast_speech_not_supported: "المتصفح لا يدعم التعرف على الصوت. الرجاء إدخال البيانات يدوياً",
+                toast_no_speech: "لم يتم اكتشاف صوت، يرجى التحدث بوضوح",
+                toast_no_mic_permission: "تم رفض إذن الوصول للميكروفون!",
+                toast_ai_parse_err: "تعذر على الذكاء الاصطناعي تحليل الموعد، جرب الكلام بشكل أوضح",
+                toast_mic_unsupported_manually: "المتصفح لا يدعم التعرف على الصوت. الرجاء إدخال البيانات يدوياً",
+                toast_name_unclear: "لم نستطع تمييز اسم المريض بوضوح، الرجاء المحاولة مجدداً",
+                edit_form_header: "تعديل الموعد",
+                edit_btn_action_lbl: "تحديث الموعد",
+                confirm_delete_title: "هل أنت متأكد من حذف الموعد؟",
+                confirm_delete_desc: "سيتم حذف موعد المريض {name} بالكامل من جدول العيادة.",
+                confirm_delete_btn: "حذف الموعد",
+                cancel_delete_btn: "إلغاء",
+                no_notes_ticket: "لا توجد أي توصيات أو ملاحظات خاصة لهذا الموعد.",
+                no_notes_lbl: "لا يوجد",
+                quad_unspecified: "غير محدد",
+                quad_upper_right: "الفك العلوي - الأيمن",
+                quad_upper_left: "الفك العلوي - الأيسر",
+                quad_lower_right: "الفك السفلي - الأيمن",
+                quad_lower_left: "الفك السفلي - الأيسر",
+                quad_general: "كامل الفم / تنظيف عام",
+                treat_check: "فحص وتشخيص",
+                treat_nerve: "علاج عصب (سحب عصب)",
+                treat_fill: "حشوة تجميلية",
+                treat_clean: "تنظيف أسنان وتجريف لثة",
+                treat_ortho: "متابعة تقويم أسنان",
+                treat_extract: "خلع / قلع سن",
+                treat_other: "إجراء آخر"
+            },
+            en: {
+                lang_btn: "عربي",
+                app_title: "My Smart Dental Clinic Database",
+                app_subtitle: "Simplified management with AI Voice capabilities",
+                backup_banner_text: "Warning: You haven't backed up / exported patient appointments in over 3 days! Please export to secure them.",
+                save_now: "Save Now",
+                export: "Export Backup",
+                import: "Import",
+                clinic_stats: "Today's Activity",
+                registered_today: "Patients registered today",
+                ready_welcome: "Clinic is ready to receive patients",
+                active_clinic_msg: "Clinic is fully active today with {count} scheduled appointments.",
+                last_backup_lbl: "Last Backup Exported:",
+                not_saved_yet: "Not saved yet",
+                smart_feature: "SMART FEATURE",
+                voice_assistant_title: "Clinic Voice Assistant (Gemini)",
+                voice_desc: "Save time! Record patient appointments with your voice specifying tooth locations, or let AI read today's schedule out loud with perfect clarity!",
+                dictate_btn: "Dictate Appointment",
+                read_schedule_btn: "Read Schedule Out Loud",
+                reading_ai_voice: "Reading schedule via AI...",
+                activating_voice: "Activating audio synthesis...",
+                add_new_appointment: "Add New Appointment",
+                cancel_edit: "Cancel Edit",
+                patient_name_lbl: "Patient Name *",
+                appointment_date_lbl: "Appointment Date *",
+                appointment_time_lbl: "Time *",
+                patient_phone_lbl: "Phone Number (Optional)",
+                tooth_quadrant_lbl: "Tooth Quadrant / Jaw",
+                tooth_number_lbl: "Tooth Number (FDI / Name)",
+                patient_treatment_lbl: "Treatment / Procedure",
+                medical_notes_lbl: "Medical Notes",
+                add_to_schedule: "Add to Schedule",
+                view_appointments_date: "View date:",
+                today_btn: "Today",
+                clinic_appointments: "Clinic Appointments",
+                today_date_lbl: "Today's Schedule",
+                appointments_cnt: "Appointments",
+                no_appointments: "No appointments registered on this date",
+                no_app_desc: "Add a new patient from the side panel or use the Voice Assistant to start filling the schedule.",
+                col_time: "Time",
+                col_name: "Patient Name",
+                col_phone: "Phone",
+                col_tooth: "Tooth Location",
+                col_treatment: "Treatment",
+                col_notes: "Notes",
+                col_actions: "Options & Card",
+                card_modal_title: "Patient Appointment Card Details",
+                card_hint_title: "💡 Smart Tip:",
+                card_hint_desc: "Take a screenshot of the beautiful ticket below and send it directly to the patient via WhatsApp to confirm their appointment!",
+                clinic_dept_name: "Specialized Dental Clinic",
+                patient_confirm_ticket: "Patient Appointment Confirmation Ticket",
+                card_p_name: "Patient Name:",
+                card_p_date: "Appointment Date:",
+                card_p_time: "Scheduled Time:",
+                card_p_treatment: "Requested Procedure:",
+                card_p_tooth: "Targeted Tooth:",
+                card_p_notes_title: "Medical Instructions:",
+                card_footer_attend: "Please arrive 10 minutes prior to your appointment time.",
+                card_footer_wish: "Wishing you a healthy, everlasting smile ✨",
+                print_card: "Print Ticket",
+                close_btn: "OK / Close",
+                voice_modal_header: "Smart Voice Assistant Booking",
+                voice_status_click: "Click 'Start Recording' and state the appointment details...",
+                voice_desc_sub: "You can speak naturally.",
+                suggested_phrase_title: "Suggested phrase with tooth details:",
+                voice_suggest_example: '"Register patient Robert, appointment today at 4 PM, nerve treatment for upper right quadrant tooth 14, phone 0599111222"',
+                transcript_lbl: "Transcribed Text:",
+                gemini_parsing_txt: "Gemini is analyzing the details and adding tooth locations...",
+                start_record: "Start Recording",
+                stop_record: "Stop Recording",
+                listening_status: "Listening doctor... Speak now",
+                click_to_talk_again: "Click to speak again...",
+                all_dates_registered: "All Registered Dates",
+                unspecified_tooth: "Unspecified",
+                card_text_title: "Card",
+                toast_db_load_err: "Error loading local database",
+                toast_form_req_err: "Please fill all required fields (Name, Date, Time)",
+                toast_updated_sucess: "Patient details updated successfully",
+                toast_add_success: "New appointment scheduled successfully",
+                toast_removed_msg: "Appointment removed successfully",
+                toast_backup_ok: "Database backed up and exported successfully!",
+                toast_backup_err: "Failed to export backup data",
+                toast_import_ok: "Backup database imported successfully",
+                toast_import_err: "Invalid backup file format!",
+                toast_import_read_err: "An error occurred while reading the backup file",
+                toast_speech_not_supported: "Web Speech recognition is not supported in this browser. Please enter manually",
+                toast_no_speech: "No speech detected. Please speak clearly",
+                toast_no_mic_permission: "Microphone permission denied!",
+                toast_ai_parse_err: "AI could not parse the speech, try to speak clearer",
+                toast_mic_unsupported_manually: "Speech recognition not supported. Please fill manually",
+                toast_name_unclear: "Could not identify patient name clearly, please try again",
+                edit_form_header: "Edit Appointment",
+                edit_btn_action_lbl: "Update Appointment",
+                confirm_delete_title: "Are you sure you want to delete?",
+                confirm_delete_desc: "This will permanently remove the appointment for {name}.",
+                confirm_delete_btn: "Delete",
+                cancel_delete_btn: "Cancel",
+                no_notes_ticket: "No special instructions or notes specified for this appointment.",
+                no_notes_lbl: "None",
+                quad_unspecified: "Unspecified",
+                quad_upper_right: "Upper Right Jaw",
+                quad_upper_left: "Upper Left Jaw",
+                quad_lower_right: "Lower Right Jaw",
+                quad_lower_left: "Lower Left Jaw",
+                quad_general: "Full Mouth / General Cleaning",
+                treat_check: "Checkup & Diagnosis",
+                treat_nerve: "Root Canal Treatment",
+                treat_fill: "Cosmetic Filling",
+                treat_clean: "Scaling & Gums Therapy",
+                treat_ortho: "Orthodontics Followup",
+                treat_extract: "Tooth Extraction",
+                treat_other: "Other Procedure"
+            }
+        };
+
+        // Core In-Memory State & Storage Configuration
+        let appointments = [];
+        let recognition = null;
+        let isRecording = false;
+        let currentLang = 'ar'; // Default language
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            // Load preferred language if saved
+            const savedLang = localStorage.getItem('dental_clinic_language');
+            if (savedLang) {
+                currentLang = savedLang;
+            }
+            
+            loadDatabase();
+            applyLanguage();
+            setFilterToToday();
+            checkBackupReminder();
+            initSpeechRecognition();
+            startLiveClock();
+        };
+
+        // Start real-time clock and Dates (Miladi & Hijri)
+        function startLiveClock() {
+            updateClockAndDates();
+            setInterval(updateClockAndDates, 1000);
+        }
+
+        function updateClockAndDates() {
+            const now = new Date();
+            
+            // Format Live Time (HH:MM:SS)
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('live-clock').innerText = `${hours}:${minutes}:${seconds}`;
+
+            // Define locales according to selection
+            const locale = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+
+            // Format Gregorian Date
+            const gregorianOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedGregorian = new Intl.DateTimeFormat(locale, gregorianOptions).format(now);
+            document.getElementById('gregorian-date').innerText = formattedGregorian;
+
+            // Format Hijri Date (using Islamic Um Al-Qura calendar subsystem)
+            try {
+                const hijriOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+                const formattedHijri = new Intl.DateTimeFormat(locale + '-u-ca-islamic-umalqura', hijriOptions).format(now);
+                document.getElementById('hijri-date').innerText = formattedHijri;
+            } catch (e) {
+                // Fallback in case of lack of native subsystem support
+                document.getElementById('hijri-date').innerText = "";
+            }
+        }
+
+        // Toggle Language action
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('dental_clinic_language', currentLang);
+            applyLanguage();
+            filterAppointments();
+            updateClockAndDates();
+        }
+
+        // Apply translations of UI labels dynamically based on currentLang
+        function applyLanguage() {
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.documentElement.lang = currentLang;
+
+            // Toggle Class adjustments for Search icon margins
+            const searchField = document.getElementById('schedule-search');
+            if (currentLang === 'en') {
+                searchField.classList.remove('pr-9', 'pl-3');
+                searchField.classList.add('pl-9', 'pr-3');
+                searchField.parentNode.querySelector('span').classList.remove('right-0', 'pr-3');
+                searchField.parentNode.querySelector('span').classList.add('left-0', 'pl-3');
+            } else {
+                searchField.classList.remove('pl-9', 'pr-3');
+                searchField.classList.add('pr-9', 'pl-3');
+                searchField.parentNode.querySelector('span').classList.remove('left-0', 'pl-3');
+                searchField.parentNode.querySelector('span').classList.add('right-0', 'pr-3');
+            }
+
+            // Map all data-i18n attributes
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+
+            // Set dynamic language button text
+            document.getElementById('lang-btn-text').innerText = translations[currentLang].lang_btn;
+
+            // Update Form Input Placeholders
+            document.getElementById('patient-name').placeholder = currentLang === 'ar' ? 'أحمد محمد علي...' : 'John Doe...';
+            document.getElementById('patient-phone').placeholder = currentLang === 'ar' ? '05xxxxxxxx' : '05xxxxxxxx';
+            document.getElementById('tooth-number').placeholder = currentLang === 'ar' ? 'مثال: 16 أو الضاحك' : 'e.g. 16 or Premolar';
+            document.getElementById('appointment-notes').placeholder = currentLang === 'ar' ? 'حالة مستعجلة، حساسية تخدير...' : 'Urgent, allergy to anesthesia...';
+            document.getElementById('schedule-search').placeholder = currentLang === 'ar' ? 'ابحث باسم المريض أو هاتف أو سن...' : 'Search by name, phone or tooth...';
+
+            // Update static voice helper phrase
+            document.getElementById('suggested-voice-example').innerText = translations[currentLang].voice_suggest_example;
+
+            // Reset Form and titles to match newly translated layout
+            resetForm();
+        }
+
+        // Load data from localStorage
+        function loadDatabase() {
+            try {
+                const stored = localStorage.getItem('dental_clinic_appointments');
+                if (stored) {
+                    appointments = JSON.parse(stored);
+                } else {
+                    // Seed some initial data for visual purposes
+                    const todayStr = getTodayDateString();
+                    appointments = [
+                        {
+                            id: "seed-1",
+                            name: currentLang === 'ar' ? "محمد عبد الله" : "Mohammed Abdullah",
+                            date: todayStr,
+                            time: "16:00",
+                            phone: "0599112233",
+                            toothQuadrant: "علوي أيمن",
+                            toothNumber: "16",
+                            treatment: "علاج عصب",
+                            notes: "تحتاج الجلسة تخدير إضافي"
+                        },
+                        {
+                            id: "seed-2",
+                            name: currentLang === 'ar' ? "فاطمة أحمد" : "Fatima Ahmed",
+                            date: todayStr,
+                            time: "17:30",
+                            phone: "0599445566",
+                            toothQuadrant: "سفلي أيسر",
+                            toothNumber: "34",
+                            treatment: "حشوة تجميلية",
+                            notes: "متابعة الحشوة السابقة"
+                        }
+                    ];
+                    saveToLocalStorage();
+                }
+            } catch (e) {
+                console.error("Error loading Database:", e);
+                showToast(translations[currentLang].toast_db_load_err, "error");
+            }
+        }
+
+        // Save active array state to local storage
+        function saveToLocalStorage() {
+            localStorage.setItem('dental_clinic_appointments', JSON.stringify(appointments));
+            updateMetrics();
+        }
+
+        // Return local today date as YYYY-MM-DD
+        function getTodayDateString() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Custom UI Toast Notification instead of alert()
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast-notification');
+            const iconContainer = document.getElementById('toast-icon');
+            const msgContainer = document.getElementById('toast-message');
+
+            msgContainer.innerText = message;
+
+            if (type === "success") {
+                iconContainer.className = "w-6 h-6 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs";
+                iconContainer.innerHTML = '<i class="fa-solid fa-check"></i>';
+            } else if (type === "error") {
+                iconContainer.className = "w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs";
+                iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                iconContainer.className = "w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs";
+                iconContainer.innerHTML = '<i class="fa-solid fa-info"></i>';
+            }
+
+            // Animate In
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 4500);
+        }
+
+        // Setup filter date defaults to Today
+        function setFilterToToday() {
+            const todayStr = getTodayDateString();
+            document.getElementById('schedule-date-filter').value = todayStr;
+            document.getElementById('appointment-date').value = todayStr;
+            filterAppointments();
+        }
+
+        // Handle Appointment Form Submission
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('edit-id').value;
+            const name = document.getElementById('patient-name').value.trim();
+            const date = document.getElementById('appointment-date').value;
+            const time = document.getElementById('appointment-time').value;
+            const phone = document.getElementById('patient-phone').value.trim();
+            const toothQuadrant = document.getElementById('tooth-quadrant').value;
+            const toothNumber = document.getElementById('tooth-number').value.trim();
+            const treatment = document.getElementById('patient-treatment').value;
+            const notes = document.getElementById('appointment-notes').value.trim();
+
+            if (!name || !date || !time) {
+                showToast(translations[currentLang].toast_form_req_err, "error");
+                return;
+            }
+
+            if (editId) {
+                // Edit existing record
+                const index = appointments.findIndex(app => app.id === editId);
+                if (index !== -1) {
+                    appointments[index] = { id: editId, name, date, time, phone, toothQuadrant, toothNumber, treatment, notes };
+                    showToast(translations[currentLang].toast_updated_sucess);
+                }
+            } else {
+                // Add new record
+                const newRecord = {
+                    id: 'pt-' + Date.now(),
+                    name,
+                    date,
+                    time,
+                    phone,
+                    toothQuadrant,
+                    toothNumber,
+                    treatment,
+                    notes
+                };
+                appointments.push(newRecord);
+                showToast(translations[currentLang].toast_add_success);
+            }
+
+            saveToLocalStorage();
+            resetForm();
+            filterAppointments();
+        }
+
+        // Start editing patient details
+        function editAppointment(id) {
+            const app = appointments.find(a => a.id === id);
+            if (!app) return;
+
+            document.getElementById('edit-id').value = app.id;
+            document.getElementById('patient-name').value = app.name;
+            document.getElementById('appointment-date').value = app.date;
+            document.getElementById('appointment-time').value = app.time;
+            document.getElementById('patient-phone').value = app.phone || '';
+            document.getElementById('tooth-quadrant').value = app.toothQuadrant || '';
+            document.getElementById('tooth-number').value = app.toothNumber || '';
+            document.getElementById('patient-treatment').value = app.treatment;
+            document.getElementById('appointment-notes').value = app.notes || '';
+
+            // Update UI state to EDIT mode
+            document.getElementById('form-title').innerHTML = `<i class="fa-solid fa-user-pen text-amber-500"></i> <span>${translations[currentLang].edit_form_header}</span>`;
+            document.getElementById('submit-btn').className = "w-full bg-amber-500 hover:bg-amber-400 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2";
+            document.getElementById('submit-btn').innerHTML = `<i class="fa-solid fa-pen"></i> <span>${translations[currentLang].edit_btn_action_lbl}</span>`;
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+            // Scroll up to form on mobile devices smoothly
+            window.scrollTo({ top: 100, behavior: 'smooth' });
+        }
+
+        // Delete confirmation custom modal
+        function deleteAppointment(id) {
+            const index = appointments.findIndex(a => a.id === id);
+            if (index === -1) return;
+
+            const name = appointments[index].name;
+            const titleText = translations[currentLang].confirm_delete_title;
+            const descText = translations[currentLang].confirm_delete_desc.replace('{name}', `<strong>${name}</strong>`);
+            const confirmBtnText = translations[currentLang].confirm_delete_btn;
+            const cancelBtnText = translations[currentLang].cancel_delete_btn;
+
+            // Create a custom modal dynamically to avoid alert/confirm
+            const modal = document.createElement('div');
+            modal.className = "fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50";
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 text-center animate-in fade-in zoom-in-95 duration-150">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fa-solid fa-trash text-lg"></i>
+                    </div>
+                    <h3 class="text-md font-bold text-slate-800 mb-2">${titleText}</h3>
+                    <p class="text-slate-500 text-xs mb-6">${descText}</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="confirm-delete-btn" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded-xl text-xs transition">${confirmBtnText}</button>
+                        <button id="cancel-delete-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-xl text-xs transition">${cancelBtnText}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.querySelector('#confirm-delete-btn').addEventListener('click', () => {
+                appointments.splice(index, 1);
+                saveToLocalStorage();
+                filterAppointments();
+                showToast(translations[currentLang].toast_removed_msg);
+                modal.remove();
+            });
+
+            modal.querySelector('#cancel-delete-btn').addEventListener('click', () => {
+                modal.remove();
+            });
+        }
+
+        // Open Patient Card Modal Window
+        function openPatientCard(id) {
+            const app = appointments.find(a => a.id === id);
+            if (!app) return;
+
+            // Formulate human friendly representation of tooth location
+            let toothRepresentation = translations[currentLang].unspecified_tooth;
+            if (app.toothQuadrant || app.toothNumber) {
+                const quadTranslated = app.toothQuadrant ? translateOption(app.toothQuadrant) : "";
+                const num = app.toothNumber ? `(N: ${app.toothNumber})` : "";
+                toothRepresentation = `${quadTranslated} ${num}`.trim();
+            }
+
+            // Fill card elements
+            document.getElementById('card-patient-name').innerText = app.name;
+            
+            const localeStr = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = new Date(app.date).toLocaleDateString(localeStr, options);
+            document.getElementById('card-patient-date').innerText = formattedDate;
+            document.getElementById('card-patient-time').innerText = formatTimeAmPm(app.time);
+            document.getElementById('card-patient-treatment').innerText = translateOption(app.treatment);
+            document.getElementById('card-patient-tooth').innerText = toothRepresentation;
+            document.getElementById('card-patient-notes').innerText = app.notes ? app.notes : translations[currentLang].no_notes_ticket;
+
+            // Show Modal
+            const pModal = document.getElementById('patient-card-modal');
+            pModal.classList.remove('hidden');
+            pModal.classList.add('flex');
+        }
+
+        // Helper to translate core treatments or quadrants if matched
+        function translateOption(val) {
+            if (!val) return "";
+            // Quadrants dictionary translation
+            const dict = {
+                "علوي أيمن": translations[currentLang].quad_upper_right,
+                "علوي أيسر": translations[currentLang].quad_upper_left,
+                "سفلي أيمن": translations[currentLang].quad_lower_right,
+                "سفلي أيسر": translations[currentLang].quad_lower_left,
+                "عام": translations[currentLang].quad_general,
+                "فحص وتشخيص": translations[currentLang].treat_check,
+                "علاج عصب": translations[currentLang].treat_nerve,
+                "حشوة تجميلية": translations[currentLang].treat_fill,
+                "تنظيف ولثة": translations[currentLang].treat_clean,
+                "تقويم أسنان": translations[currentLang].treat_ortho,
+                "قلع سن": translations[currentLang].treat_extract,
+                "أخرى": translations[currentLang].treat_other
+            };
+            return dict[val] || val;
+        }
+
+        // Close Patient Card Modal Window
+        function closePatientCardModal() {
+            const pModal = document.getElementById('patient-card-modal');
+            pModal.classList.remove('flex');
+            pModal.classList.add('hidden');
+        }
+
+        // Reset inputs to default add mode
+        function resetForm() {
+            document.getElementById('edit-id').value = '';
+            document.getElementById('appointment-form').reset();
+            
+            // Set date default to current filter date
+            const filterDate = document.getElementById('schedule-date-filter').value;
+            document.getElementById('appointment-date').value = filterDate || getTodayDateString();
+
+            // Restore add mode styles
+            document.getElementById('form-title').innerHTML = `<i class="fa-solid fa-user-plus text-teal-600"></i> <span>${translations[currentLang].add_new_appointment}</span>`;
+            document.getElementById('submit-btn').className = "w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2";
+            document.getElementById('submit-btn').innerHTML = `<i class="fa-solid fa-plus"></i> <span data-i18n="add_to_schedule">${translations[currentLang].add_to_schedule}</span>`;
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+        }
+
+        // Filter appointments and render views
+        function filterAppointments() {
+            const filterDate = document.getElementById('schedule-date-filter').value;
+            const searchQuery = document.getElementById('schedule-search').value.toLowerCase().trim();
+
+            // Set Human Date title label
+            const dLabel = document.getElementById('current-filtered-date-label');
+            if (filterDate) {
+                const localeStr = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = new Date(filterDate).toLocaleDateString(localeStr, options);
+                dLabel.innerText = formattedDate;
+            } else {
+                dLabel.innerText = translations[currentLang].all_dates_registered;
+            }
+
+            // Perform filtering
+            let filtered = appointments;
+            if (filterDate) {
+                filtered = filtered.filter(app => app.date === filterDate);
+            }
+            if (searchQuery) {
+                filtered = filtered.filter(app => 
+                    app.name.toLowerCase().includes(searchQuery) || 
+                    (app.phone && app.phone.includes(searchQuery)) ||
+                    app.treatment.toLowerCase().includes(searchQuery) ||
+                    translateOption(app.treatment).toLowerCase().includes(searchQuery) ||
+                    (app.toothNumber && app.toothNumber.toLowerCase().includes(searchQuery)) ||
+                    (app.toothQuadrant && app.toothQuadrant.toLowerCase().includes(searchQuery)) ||
+                    (app.toothQuadrant && translateOption(app.toothQuadrant).toLowerCase().includes(searchQuery))
+                );
+            }
+
+            // Sort by time
+            filtered.sort((a, b) => a.time.localeCompare(b.time));
+
+            renderTable(filtered);
+            renderCards(filtered);
+
+            // Update badge count
+            document.getElementById('filtered-count').innerText = `${filtered.length} ${translations[currentLang].appointments_cnt}`;
+        }
+
+        // Render desktop tabular view
+        function renderTable(list) {
+            const tbody = document.getElementById('appointment-table-body');
+            const emptyState = document.getElementById('empty-state');
+            tbody.innerHTML = '';
+
+            if (list.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            list.forEach(app => {
+                const toothStr = (app.toothQuadrant || app.toothNumber) ? 
+                    `<span class="bg-cyan-50 text-cyan-800 text-[11px] px-2 py-1 rounded-md border border-cyan-100 font-semibold">${translateOption(app.toothQuadrant) || ''} ${app.toothNumber ? '#' + app.toothNumber : ''}</span>` 
+                    : `<span class="text-slate-300 text-xs">${translations[currentLang].unspecified_tooth}</span>`;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-50/50 transition duration-150";
+                row.innerHTML = `
+                    <td class="py-3 px-5 font-semibold text-teal-700">${formatTimeAmPm(app.time)}</td>
+                    <td class="py-3 px-5 font-bold text-slate-800">${app.name}</td>
+                    <td class="py-3 px-5 text-slate-500">${app.phone ? app.phone : '---'}</td>
+                    <td class="py-3 px-5">${toothStr}</td>
+                    <td class="py-3 px-5">
+                        <span class="bg-teal-50 text-teal-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-teal-100">${translateOption(app.treatment)}</span>
+                    </td>
+                    <td class="py-3 px-5 text-xs text-slate-400 italic max-w-xs truncate" title="${app.notes || ''}">${app.notes ? app.notes : translations[currentLang].no_notes_lbl}</td>
+                    <td class="py-3 px-5 text-center flex items-center justify-center gap-1.5">
+                        <button onclick="openPatientCard('${app.id}')" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-1 transition text-xs font-bold shadow-sm" title="${translations[currentLang].card_text_title}">
+                            <i class="fa-solid fa-address-card text-[10px]"></i>
+                            <span>${translations[currentLang].card_text_title}</span>
+                        </button>
+                        <button onclick="editAppointment('${app.id}')" class="w-8 h-8 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-600 flex items-center justify-center transition" title="Edit">
+                            <i class="fa-solid fa-pen-to-square text-xs"></i>
+                        </button>
+                        <button onclick="deleteAppointment('${app.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition" title="Delete">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Render responsive mobile view card elements
+        function renderCards(list) {
+            const container = document.getElementById('appointment-cards-container');
+            container.innerHTML = '';
+
+            if (list.length === 0) return;
+
+            list.forEach(app => {
+                const toothStrMobile = (app.toothQuadrant || app.toothNumber) ? 
+                    `${translateOption(app.toothQuadrant) || ''} ${app.toothNumber ? '#' + app.toothNumber : ''}` 
+                    : translations[currentLang].unspecified_tooth;
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 p-4 rounded-xl border border-slate-200/50 space-y-3 shadow-xs";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-bold text-teal-600 bg-teal-50 border border-teal-200/50 px-2 py-0.5 rounded-lg">${formatTimeAmPm(app.time)}</span>
+                            <h4 class="font-bold text-slate-800 text-md mt-1.5">${app.name}</h4>
+                        </div>
+                        <div class="flex gap-1.5">
+                            <button onclick="openPatientCard('${app.id}')" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-2.5 py-1 rounded-lg flex items-center justify-center gap-1 shadow-xs">
+                                <i class="fa-solid fa-address-card"></i>
+                                <span>${translations[currentLang].card_text_title}</span>
+                            </button>
+                            <button onclick="editAppointment('${app.id}')" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-teal-600 flex items-center justify-center shadow-xs">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button onclick="deleteAppointment('${app.id}')" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-rose-500 flex items-center justify-center shadow-xs">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-xs space-y-1.5 text-slate-600 pt-1 border-t border-slate-200/50">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-phone text-slate-400 w-4"></i>
+                            <span>${app.phone ? app.phone : translations[currentLang].no_notes_lbl}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-tooth text-cyan-600 w-4"></i>
+                            <span class="font-semibold text-cyan-800">${translations[currentLang].tooth_quadrant_lbl}: ${toothStrMobile}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-stethoscope text-slate-400 w-4"></i>
+                            <span>${translateOption(app.treatment)}</span>
+                        </div>
+                        ${app.notes ? `
+                        <div class="flex items-start gap-1.5 bg-white p-2 rounded-lg border border-slate-200/30 mt-1">
+                            <i class="fa-solid fa-comment-medical text-amber-500 mt-0.5"></i>
+                            <span class="italic text-[11px] text-slate-500 leading-normal">${app.notes}</span>
+                        </div>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Format 24-hour time "14:30" to "02:30 PM" Arabic/English style
+        function formatTimeAmPm(timeStr) {
+            if (!timeStr) return '';
+            const [hours, minutes] = timeStr.split(':');
+            let h = parseInt(hours);
+            let ampm = "";
+            if (currentLang === 'ar') {
+                ampm = h >= 12 ? 'م' : 'ص';
+            } else {
+                ampm = h >= 12 ? 'PM' : 'AM';
+            }
+            h = h % 12;
+            h = h ? h : 12; // zero hour is 12
+            return `${String(h).padStart(2, '0')}:${minutes} ${ampm}`;
+        }
+
+        // Update Dashboard Metrics
+        function updateMetrics() {
+            const todayStr = getTodayDateString();
+            const todayCount = appointments.filter(a => a.date === todayStr).length;
+
+            document.getElementById('patient-count-badge').innerText = todayCount;
+
+            // State subtext feedback
+            const subtext = document.getElementById('stat-subtext');
+            if (todayCount === 0) {
+                subtext.innerText = translations[currentLang].ready_welcome;
+                subtext.className = "text-xs text-slate-400 mt-1";
+            } else {
+                subtext.innerText = translations[currentLang].active_clinic_msg.replace('{count}', todayCount);
+                subtext.className = "text-xs text-teal-600 mt-1 font-semibold";
+            }
+        }
+
+        // Check local storage tracking of last backup/export date
+        function checkBackupReminder() {
+            const lastBackup = localStorage.getItem('dental_clinic_last_backup_time');
+            const indicatorText = document.getElementById('last-backup-text');
+            const banner = document.getElementById('backup-reminder-banner');
+
+            if (lastBackup) {
+                const lastDate = new Date(parseInt(lastBackup));
+                const localeStr = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+                indicatorText.innerText = lastDate.toLocaleDateString(localeStr);
+                
+                // Compare with current date (Difference in days)
+                const differenceInTime = Date.now() - lastDate.getTime();
+                const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+                if (differenceInDays >= 3) {
+                    banner.classList.remove('hidden');
+                } else {
+                    banner.classList.add('hidden');
+                }
+            } else {
+                // Never backed up, show banner by default to encourage safety habit
+                indicatorText.innerText = translations[currentLang].not_saved_yet;
+                banner.classList.remove('hidden');
+            }
+        }
+
+        // Export local database to a local downloadable file (JSON)
+        function exportBackupData() {
+            try {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appointments, null, 2));
+                const downloadAnchor = document.createElement('a');
+                
+                const currentDate = getTodayDateString();
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `DentalClinic_Backup_${currentDate}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+
+                // Update timestamp
+                localStorage.setItem('dental_clinic_last_backup_time', Date.now().toString());
+                checkBackupReminder();
+                showToast(translations[currentLang].toast_backup_ok);
+            } catch (e) {
+                console.error(e);
+                showToast(translations[currentLang].toast_backup_err, "error");
+            }
+        }
+
+        // Trigger Hidden File Upload field
+        function triggerFileInput() {
+            document.getElementById('import-file-input').click();
+        }
+
+        // Parse and Import backup file
+        function importBackupData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedList = JSON.parse(e.target.result);
+                    if (Array.isArray(importedList)) {
+                        appointments = importedList;
+                        saveToLocalStorage();
+                        filterAppointments();
+                        showToast(translations[currentLang].toast_import_ok);
+                        
+                        // Set backup date to now
+                        localStorage.setItem('dental_clinic_last_backup_time', Date.now().toString());
+                        checkBackupReminder();
+                    } else {
+                        showToast(translations[currentLang].toast_import_err, "error");
+                    }
+                } catch (err) {
+                    showToast(translations[currentLang].toast_import_read_err, "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Helpers for Audio Stream PCM16 to WAV conversion
+        const base64ToArrayBuffer = (base64) => {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
+
+        const pcmToWav = (pcm16Data, sampleRate) => {
+            const buffer = new ArrayBuffer(44 + pcm16Data.length * 2);
+            const view = new DataView(buffer);
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16Data.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16Data.length * 2, true);
+
+            for (let i = 0; i < pcm16Data.length; i++) {
+                view.setInt16(44 + i * 2, pcm16Data[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        };
+
+        const writeString = (view, offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        // TTS API Caller
+        async function speakTodaySchedule() {
+            const readBtn = document.getElementById('read-schedule-btn');
+            const readIcon = document.getElementById('read-icon');
+            const readText = document.getElementById('read-text');
+
+            const todayStr = getTodayDateString();
+            const todayList = appointments.filter(a => a.date === todayStr);
+
+            // Construct brief text script for Gemini to speak
+            let reportText = "";
+            const isAr = currentLang === 'ar';
+
+            if (todayList.length === 0) {
+                reportText = isAr ? 
+                    "مرحباً دكتور. ليس لديك أي مواعيد مسجلة لليوم حتى الآن. أتمنى لك يوماً سعيداً ومريحاً." :
+                    "Hello Doctor. You have no scheduled appointments registered for today yet. Have a wonderful and relaxing day.";
+            } else {
+                const localeStr = isAr ? 'ar-EG' : 'en-US';
+                const options = { weekday: 'long', day: 'numeric', month: 'long' };
+                const formattedDate = new Date(todayStr).toLocaleDateString(localeStr, options);
+                
+                if (isAr) {
+                    reportText = `مرحباً دكتور. تقرير مواعيد العيادة ليوم ${formattedDate} كالتالي. لديك ${todayList.length} مرضى مسجلين اليوم. `;
+                    todayList.sort((a,b) => a.time.localeCompare(b.time)).forEach((app, i) => {
+                        const timeHuman = formatTimeAmPm(app.time);
+                        const toothDetails = (app.toothQuadrant || app.toothNumber) ? `لموضع السن ${app.toothQuadrant || ''} رقم ${app.toothNumber || ''}` : '';
+                        reportText += `المريض رقم ${i+1}: ${app.name}، الساعة ${timeHuman}، لإجراء ${app.treatment} ${toothDetails}. `;
+                        if (app.notes) {
+                            reportText += `ملاحظة: ${app.notes}. `;
+                        }
+                    });
+                    reportText += "هذا كل شيء لجدول اليوم. بالتوفيق دكتور!";
+                } else {
+                    reportText = `Hello Doctor. Here is the schedule report for ${formattedDate}. You have ${todayList.length} patients registered today. `;
+                    todayList.sort((a,b) => a.time.localeCompare(b.time)).forEach((app, i) => {
+                        const timeHuman = formatTimeAmPm(app.time);
+                        const toothDetails = (app.toothQuadrant || app.toothNumber) ? `for tooth location ${translateOption(app.toothQuadrant) || ''} number ${app.toothNumber || ''}` : '';
+                        reportText += `Patient number ${i+1}: ${app.name}, at ${timeHuman}, for ${translateOption(app.treatment)} ${toothDetails}. `;
+                        if (app.notes) {
+                            reportText += `Note: ${app.notes}. `;
+                        }
+                    });
+                    reportText += "That is all for today's schedule. Good luck, Doctor!";
+                }
+            }
+
+            // Lock Button State during synthesis
+            readBtn.disabled = true;
+            readIcon.className = "fa-solid fa-spinner animate-spin text-teal-300";
+            readText.innerText = translations[currentLang].activating_voice;
+
+            try {
+                // Pre-built pleasant voice configuration
+                const voiceName = isAr ? "Aoede" : "Zephyr"; 
+
+                const payload = {
+                    contents: [{
+                        parts: [{ text: reportText }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: voiceName }
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                const apiKey = "AIzaSyA7FLjj5w4bWqmhJhI4ndGJ6K0p25gVT10"; // Place your own Google Gemini Key here locally
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+                    
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    // Play audio in the hidden player element
+                    const player = document.getElementById('tts-audio-player');
+                    player.src = audioUrl;
+                    
+                    readIcon.className = "fa-solid fa-waveform text-cyan-300 animate-pulse";
+                    readText.innerText = translations[currentLang].reading_ai_voice;
+                    
+                    player.play();
+                    
+                    player.onended = () => {
+                        resetTTSButtonState();
+                    };
+                } else {
+                    throw new Error("Incorrect or incomplete answer received from the AI model");
+                }
+
+            } catch (err) {
+                console.error("Error synthesized speech:", err);
+                showToast(currentLang === 'ar' ? "تعذر الاتصال بخدمة الصوت. تأكد من الإنترنت ومفتاح الـ API" : "Could not connect to Voice synthesis. Check Internet and API Key", "error");
+                resetTTSButtonState();
+            }
+        }
+
+        function resetTTSButtonState() {
+            const readBtn = document.getElementById('read-schedule-btn');
+            const readIcon = document.getElementById('read-icon');
+            const readText = document.getElementById('read-text');
+            
+            readBtn.disabled = false;
+            readIcon.className = "fa-solid fa-volume-high";
+            readText.innerText = translations[currentLang].read_schedule_btn;
+        }
+
+        // Open the voice dictation modal
+        function openVoiceDictationModal() {
+            document.getElementById('voice-modal').classList.remove('hidden');
+            document.getElementById('voice-modal').classList.add('flex');
+            document.getElementById('voice-transcript').value = '';
+            document.getElementById('transcript-container').classList.add('hidden');
+            document.getElementById('voice-status').innerText = translations[currentLang].voice_status_click;
+            document.getElementById('mic-icon-large').className = "w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3 cursor-pointer";
+        }
+
+        // Close the dialog modal Safely
+        function closeVoiceDictationModal() {
+            if (isRecording) {
+                stopSpeechRecognition();
+            }
+            document.getElementById('voice-modal').classList.remove('flex');
+            document.getElementById('voice-modal').classList.add('hidden');
+            document.getElementById('ai-processing-status').classList.add('hidden');
+        }
+
+        // Init Web Speech API Webkit Speech Recognition
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.warn("Browser does not support native speech recognition.");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            // Adaptive recognition locale
+            recognition.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US'; 
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function() {
+                isRecording = true;
+                updateVoiceUI();
+            };
+
+            recognition.onresult = function(event) {
+                const speechResult = event.results[0][0].transcript;
+                document.getElementById('voice-transcript').value = speechResult;
+                document.getElementById('transcript-container').classList.remove('hidden');
+                
+                // Once voice is converted to text, send to Gemini for smart parse!
+                parseTextWithGemini(speechResult);
+            };
+
+            recognition.onerror = function(event) {
+                console.error("Speech recognition error:", event.error);
+                if (event.error === 'no-speech') {
+                    showToast(translations[currentLang].toast_no_speech, "error");
+                } else if (event.error === 'not-allowed') {
+                    showToast(translations[currentLang].toast_no_mic_permission, "error");
+                }
+                stopSpeechRecognition();
+            };
+
+            recognition.onend = function() {
+                stopSpeechRecognition();
+            };
+        }
+
+        function toggleSpeechRecognition() {
+            if (!recognition) {
+                showToast(translations[currentLang].toast_speech_not_supported, "error");
+                return;
+            }
+
+            if (isRecording) {
+                stopSpeechRecognition();
+            } else {
+                try {
+                    // Refresh language to match UI before start
+                    recognition.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+                    recognition.start();
+                } catch(e) {
+                    console.error("Start recording error:", e);
+                }
+            }
+        }
+
+        function stopSpeechRecognition() {
+            isRecording = false;
+            if (recognition) {
+                recognition.stop();
+            }
+            updateVoiceUI();
+        }
+
+        // Handle visual microphone dynamic state updates
+        function updateVoiceUI() {
+            const micBtn = document.getElementById('toggle-record-btn');
+            const wave = document.getElementById('voice-wave-container');
+            const micGlyph = document.getElementById('modal-mic-glyph');
+            const micCircle = document.getElementById('mic-icon-large');
+            const statusText = document.getElementById('voice-status');
+
+            if (isRecording) {
+                micBtn.className = "bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm";
+                micBtn.innerHTML = `<i class="fa-solid fa-stop"></i> <span>${translations[currentLang].stop_record}</span>`;
+                
+                wave.classList.remove('hidden');
+                micGlyph.className = "fa-solid fa-microphone-lines text-2xl animate-pulse";
+                micCircle.className = "w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-3 cursor-pointer ring-4 ring-rose-300/30 animate-pulse";
+                statusText.innerText = translations[currentLang].listening_status;
+            } else {
+                micBtn.className = "bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm";
+                micBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>${translations[currentLang].start_record}</span>`;
+                
+                wave.classList.add('hidden');
+                micGlyph.className = "fa-solid fa-microphone text-2xl";
+                micCircle.className = "w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3 cursor-pointer hover:scale-105 transition";
+                statusText.innerText = translations[currentLang].click_to_talk_again;
+            }
+        }
+
+        // Use Gemini Flash model to structure natural speech to structured JSON parameters (INCLUDING TOOTH LOCATION & BILINGUAL SUPPORT)
+        async function parseTextWithGemini(speechText) {
+            const processingIndicator = document.getElementById('ai-processing-status');
+            processingIndicator.classList.remove('hidden');
+
+            const todayStr = getTodayDateString();
+
+            // Setup prompt instructions based on active UI language
+            let systemPrompt = "";
+            if (currentLang === 'ar') {
+                systemPrompt = `
+                أنت معالج بيانات ومساعد عيادة أسنان ذكي ومحترف. مهمتك تحويل النص العربي الذي تم إملاؤه بواسطة طبيب الأسنان إلى حقل بيانات JSON فقط لتسجيل موعد مريض.
+                النص قد يحتوي على: اسم المريض، وقت الموعد، تاريخ الموعد، رقم هاتفه، ونوع العلاج، وموضع السن أو رقمه.
+
+                القواعد الصارمة:
+                1. يجب عليك الاستجابة بـ JSON صالح (Valid JSON) فقط ودون أي نصوص ترحيبية أو تغليف markdown (بدون \`\`\`json).
+                2. حقول الـ JSON المطلوبة: "name", "date", "time", "phone", "toothQuadrant", "toothNumber", "treatment", "notes".
+                3. إذا لم يذكر التاريخ، فاستعمل دائماً تاريخ اليوم الافتراضي: "${todayStr}".
+                4. تأكد من أن الوقت المستخرج بصيغة 24 ساعة (مثال: "16:00" لـ الساعة الرابعة مساءً).
+                5. حقل العلاج "treatment" يجب أن تختاره من هذه القائمة بدقة (فحص وتشخيص، علاج عصب، حشوة تجميلية، تنظيف ولثة، تقويم أسنان، قلع سن، أخرى). إذا لم يتم ذكره فاجعله افتراضياً "فحص وتشخيص".
+                6. حقل "toothQuadrant" يجب أن يكون أحد هذه القيم بدقة بناءً على كلام الطبيب: "علوي أيمن"، "علوي أيسر"، "سفلي أيمن"، "سفلي أيسر"، "عام"، أو يترك فارغاً "" في حال لم يذكر أي جهة.
+                7. حقل "toothNumber" يجب أن يحتوي على رقم السن أو اسمه إذا ذكره الطبيب (مثل "16"، "46"، "الضاحك الأول") وإلا يترك فارغاً "".
+                8. ضع باقي الملاحظات في حقل "notes".
+
+                مثال:
+                النص: "سجل مريض اسمه رائد للسن السفلي الأيمن رقم 46 علاج عصب بكرة الساعة 3"
+                الرد المتوقع:
+                {"name": "رائد", "date": "تاريخ الغد بصيغة YYYY-MM-DD", "time": "15:00", "phone": "", "toothQuadrant": "سفلي أيمن", "toothNumber": "46", "treatment": "علاج عصب", "notes": "تم تسجيل السن بالمساعد الصوتي"}
+                `;
+            } else {
+                systemPrompt = `
+                You are a smart, professional dental clinic data processor assistant. Your task is to transform the spoken English dictated by a dentist into a raw JSON object to log a patient appointment.
+                The spoken text might contain: Patient name, appointment time, date, phone, treatment type, and targeted tooth details.
+
+                Strict Rules:
+                1. You must respond ONLY with a valid JSON block, with NO Markdown wrapping tags (do not include \`\`\`json), greetings or extra notes.
+                2. Required JSON keys: "name", "date", "time", "phone", "toothQuadrant", "toothNumber", "treatment", "notes".
+                3. If date is not spoken, use today's default: "${todayStr}".
+                4. Ensure time is in 24-hour format (e.g. "16:30" for 4:30 PM).
+                5. The "treatment" key MUST be mapped closely to one of these EXACT Arabic strings for DB consistency: "فحص وتشخيص", "علاج عصب", "حشوة تجميلية", "تنظيف ولثة", "تقويم أسنان", "قلع سن", "أخرى". Default to "فحص وتشخيص" if not specified.
+                6. The "toothQuadrant" key MUST be mapped closely to one of these EXACT Arabic strings: "علوي أيمن", "علوي أيسر", "سفلي أيمن", "سفلي أيسر", "عام", or left empty "".
+                7. The "toothNumber" key should contain the tooth FDI number or name if spoken (e.g. "16", "46", "Premolar") otherwise left empty "".
+                8. Store remaining remarks or instructions inside the "notes" key.
+
+                Example:
+                Text: "Book patient Mary tomorrow at 3 PM phone 0555555 upper right quadrant tooth 14 root canal"
+                Expected response:
+                {"name": "Mary", "date": "YYYY-MM-DD date of tomorrow", "time": "15:00", "phone": "0555555", "toothQuadrant": "علوي أيمن", "toothNumber": "14", "treatment": "علاج عصب", "notes": "Registered via Voice Assistant"}
+                `;
+            }
+
+            try {
+                const userQuery = `Analyze and extract JSON from this text: "${speechText}"`;
+                const apiKey = "AIzaSyA7FLjj5w4bWqmhJhI4ndGJ6K0p25gVT10"; // Place your own Google Gemini Key here locally
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                    generationConfig: {
+                        responseMimeType: "application/json"
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("API server connection error");
+                }
+
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (jsonText) {
+                    const parsedData = JSON.parse(jsonText.trim());
+                    
+                    if (parsedData && parsedData.name) {
+                        // Successfully extracted patient data! Save record
+                        const newId = 'pt-' + Date.now();
+                        const newRecord = {
+                            id: newId,
+                            name: parsedData.name,
+                            date: parsedData.date || todayStr,
+                            time: parsedData.time || "12:00",
+                            phone: parsedData.phone || "",
+                            toothQuadrant: parsedData.toothQuadrant || "",
+                            toothNumber: parsedData.toothNumber || "",
+                            treatment: parsedData.treatment || "فحص وتشخيص",
+                            notes: parsedData.notes || (currentLang === 'ar' ? "تمت الإضافة بالمساعد الصوتي" : "Added via Voice Assistant")
+                        };
+
+                        appointments.push(newRecord);
+                        saveToLocalStorage();
+                        
+                        // Set filter focus to newly added record date and refresh
+                        document.getElementById('schedule-date-filter').value = newRecord.date;
+                        filterAppointments();
+
+                        showToast(`${currentLang === 'ar' ? 'تمت إضافة موعد المريض:' : 'Patient registered successfully:'} ${newRecord.name}`);
+                        closeVoiceDictationModal();
+                    } else {
+                        showToast(translations[currentLang].toast_name_unclear, "error");
+                    }
+                } else {
+                    throw new Error("Could not fetch structured details");
+                }
+
+            } catch (err) {
+                console.error("AI parsing error:", err);
+                showToast(translations[currentLang].toast_ai_parse_err, "error");
+            } finally {
+                processingIndicator.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
