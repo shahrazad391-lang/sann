@@ -199,12 +199,23 @@
                 <button id="langAr" onclick="setLang('ar')" class="px-3 py-2 text-sm font-bold bg-blue-600">عربي</button>
                 <button id="langEn" onclick="setLang('en')" class="px-3 py-2 text-sm font-bold bg-slate-700">EN</button>
             </div>
+            <button onclick="openDentalNews()" class="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
+                <i class="fa-solid fa-newspaper ml-1"></i> <span data-i18n="dentalNews">أخبار طب الأسنان</span>
+            </button>
             <button onclick="toggleApiPanel()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold">
                 <i class="fa-solid fa-key ml-1"></i> <span data-i18n="apiSettings">مفتاح Gemini</span>
             </button>
             <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-bold" data-i18n="exportExcel">تصدير Excel</button>
         </div>
     </header>
+
+    <!-- AI aftercare notice -->
+    <div class="mb-6 no-print bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-2xl px-4 py-3 flex gap-3 items-start shadow-sm">
+        <i class="fa-solid fa-circle-info text-indigo-500 mt-0.5 shrink-0"></i>
+        <p class="text-sm font-medium leading-relaxed" data-i18n="aiAftercareNotice">
+            سجلات المرضى تتضمن تعليمات ما بعد العلاج مولّدة بالذكاء الاصطناعي بناءً على الإجراء المسجّل.
+        </p>
+    </div>
 
     <!-- ═══ Gemini API Key Panel (key hidden after save; per-browser only) ═══ -->
     <div id="apiPanel" class="hidden bg-amber-50 border-2 border-amber-400 p-5 rounded-2xl mb-6 shadow-sm no-print">
@@ -357,6 +368,29 @@
         </div>
     </div>
 
+    <!-- Dental News Modal -->
+    <div id="newsModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[55] p-4 no-print">
+        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">
+                        <i class="fa-solid fa-newspaper text-sky-500 ml-2"></i>
+                        <span data-i18n="dentalNews">أخبار طب الأسنان</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1" data-i18n="newsSubtitle">ملخصات مهنية لأحدث التطورات في طب الأسنان (عبر Gemini)</p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="loadDentalNews(true)" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl text-sm font-bold">
+                        <i class="fa-solid fa-rotate ml-1"></i><span data-i18n="newsRefresh">تحديث</span>
+                    </button>
+                    <button type="button" onclick="closeDentalNews()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-sm font-bold" data-i18n="close">إغلاق</button>
+                </div>
+            </div>
+            <p id="newsStatus" class="text-xs text-slate-500 mb-3"></p>
+            <div id="newsContent" class="space-y-4 text-slate-800 leading-relaxed text-sm md:text-base" dir="rtl"></div>
+        </div>
+    </div>
+
     <!-- Teeth Picker Modal -->
     <div id="teethModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[60] p-4 no-print">
         <div class="bg-white p-6 rounded-3xl w-full max-w-xl shadow-2xl max-h-[92vh] overflow-y-auto">
@@ -473,17 +507,24 @@
             voiceDone: 'تم حفظ السجل',
             voiceAskName: 'ما اسم المريض؟',
             voiceAskPhone: 'ما رقم الهاتف؟ قل تخطي إن لم يوجد.',
-            voiceAskProc: 'ما الإجراء الذي تم؟ مثل حشو أو خلع أو تنظيف.',
+            voiceAskProc: 'صف الإجراء أو العلاج الذي تم. يمكنك التحدث بالتفصيل.',
             voiceAskDue: 'كم المبلغ المستحق؟',
             voiceAskPaid: 'كم المبلغ المدفوع؟',
             voiceGot: 'تم تسجيل',
             voiceSkipped: 'تم التخطي',
             voiceHoldToAnswer: 'اضغط مطولاً على زر الميكروفون وأجب، ثم أفلت',
-            voiceStarting: 'بدء المساعد الصوتي…',
+            voiceStarting: 'بدء المساعد الصوتي… اسم المريض ثم الإجراء فقط',
             voiceCancelled: 'تم إلغاء الإدخال الصوتي',
             voiceProcessing: 'جاري حفظ السجل…',
             voiceEmptyAnswer: 'لم أسمع إجابة — اضغط مطولاً وحاول مرة أخرى',
             markTeethHint: '— انقر أيقونة الأسنان لتحديد الأسنان المصابة',
+            aiAftercareNotice: 'سجلات المرضى تتضمن تعليمات ما بعد العلاج مولّدة بالذكاء الاصطناعي بناءً على الإجراء المسجّل.',
+            dentalNews: 'أخبار طب الأسنان',
+            newsSubtitle: 'ملخصات مهنية لأحدث التطورات في طب الأسنان (عبر Gemini)',
+            newsRefresh: 'تحديث',
+            newsLoading: 'جاري جلب أحدث أخبار طب الأسنان…',
+            newsError: 'تعذر جلب الأخبار — تحقق من مفتاح Gemini وحاول التحديث',
+            newsUpdated: 'آخر تحديث: ',
             noApiKey: 'أدخل مفتاح Gemini API أولاً (زر مفتاح Gemini أعلى الصفحة)',
             apiError: 'خطأ من Gemini API',
             exportDone: 'تم التصدير', importDone: 'تم الاستيراد', importError: 'خطأ في قراءة الملف',
@@ -550,17 +591,24 @@
             voiceDone: 'Record saved',
             voiceAskName: "What is the patient's name?",
             voiceAskPhone: 'What is the phone number? Say skip if none.',
-            voiceAskProc: 'What procedure was performed? For example filling, extraction, or cleaning.',
+            voiceAskProc: 'Describe the procedure or treatment performed. You may speak in detail.',
             voiceAskDue: 'What is the amount due?',
             voiceAskPaid: 'What amount was paid?',
             voiceGot: 'Got',
             voiceSkipped: 'Skipped',
             voiceHoldToAnswer: 'Hold the microphone button, answer, then release',
-            voiceStarting: 'Starting voice assistant…',
+            voiceStarting: 'Starting voice assistant… name then procedure only',
             voiceCancelled: 'Voice input cancelled',
             voiceProcessing: 'Saving the record…',
             voiceEmptyAnswer: 'No answer heard — hold the button and try again',
             markTeethHint: '— click the teeth icon to mark affected teeth',
+            aiAftercareNotice: 'Patient records include AI-generated aftercare instructions based on the recorded procedure.',
+            dentalNews: 'Dental News',
+            newsSubtitle: 'Professional summaries of recent dental developments (via Gemini)',
+            newsRefresh: 'Refresh',
+            newsLoading: 'Fetching the latest dental news…',
+            newsError: 'Could not load news — check your Gemini key and try refresh',
+            newsUpdated: 'Last updated: ',
             noApiKey: 'Enter your Gemini API key first (Gemini Key button in the header)',
             apiError: 'Gemini API error',
             exportDone: 'Export complete', importDone: 'Import complete', importError: 'Error reading file',
@@ -1527,14 +1575,12 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
     }
 
     // ── Guided Push-to-Talk voice assistant ────────────────────────────
+    // Only two questions: patient name + free-text procedure description
     // Press once (idle) → start conversation + TTS question
     // Hold while answering → SpeechRecognition; release → process field
     const VOICE_STEPS = [
         { field: 'name', askKey: 'voiceAskName', required: true },
-        { field: 'phone', askKey: 'voiceAskPhone', required: false },
-        { field: 'proc', askKey: 'voiceAskProc', required: false },
-        { field: 'due', askKey: 'voiceAskDue', required: false, numeric: true },
-        { field: 'paid', askKey: 'voiceAskPaid', required: false, numeric: true }
+        { field: 'proc', askKey: 'voiceAskProc', required: true, freeText: true }
     ];
 
     const voiceSession = {
@@ -1629,20 +1675,33 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         return null;
     }
 
-    async function parseFieldWithGemini(field, spokenText) {
+    async function parseFieldWithGemini(field, spokenText, freeText) {
         if (!getApiKey()) return null;
         try {
-            const prompt = `You extract one dental clinic form field from speech.
-Field: "${field}" (name|phone|proc|due|paid).
-Language for text answers: ${lang === 'ar' ? 'Arabic' : 'English'}.
-Spoken: """${spokenText}"""
-Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}
+            let prompt;
+            if (field === 'proc' || freeText) {
+                prompt = `You clean a dental procedure description from spoken clinic notes.
+Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
+Spoken transcript (may be long/detailed):
+"""${spokenText}"""
+Return ONLY JSON:
+{"value": "clear clinical procedure description preserving clinical details", "skip": false}
 Rules:
-- If user skips / has no value, skip=true and value empty or 0.
-- due/paid must be numbers (0 if unknown).
-- proc: short procedure label (extraction/filling/cleaning/exam or Arabic equivalents).
-- name: person name only.
-- phone: digits string or empty.`;
+- Keep medical meaning; fix speech-to-text noise if obvious.
+- Do NOT invent treatments that were not said.
+- Prefer a concise but complete clinical note (1–4 sentences is fine).
+- value must be a string in the same language as the speech when possible.`;
+            } else if (field === 'name') {
+                prompt = `Extract the patient full name from speech.
+Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
+Spoken: """${spokenText}"""
+Return ONLY JSON: {"value": "name only", "skip": false}
+No titles unless part of the name.`;
+            } else {
+                prompt = `Extract field "${field}" from speech.
+Spoken: """${spokenText}"""
+Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
+            }
             const raw = await callGemini(prompt, { json: true });
             return parseGeminiJson(raw);
         } catch (e) {
@@ -1651,19 +1710,23 @@ Rules:
         }
     }
 
-    async function interpretAnswer(field, spokenText, numeric) {
+    async function interpretAnswer(field, spokenText, numeric, freeText) {
         const trimmed = (spokenText || '').trim();
-        if (isSkipPhrase(trimmed)) return { skip: true, value: numeric ? 0 : '' };
+        // Procedure free-text: never treat long speech as "skip" unless explicit skip words only
+        if (!freeText && isSkipPhrase(trimmed)) return { skip: true, value: numeric ? 0 : '' };
+        if (freeText && isSkipPhrase(trimmed) && trimmed.split(/\s+/).length <= 3) {
+            return { skip: true, value: '' };
+        }
 
         if (numeric) {
             const n = extractSpokenNumber(trimmed);
             if (n != null && !isNaN(n)) return { skip: false, value: n };
         }
 
-        // Gemini when available for cleaner extraction
-        const ai = await parseFieldWithGemini(field, trimmed);
+        // Gemini when available — especially important for long procedure text
+        const ai = await parseFieldWithGemini(field, trimmed, freeText);
         if (ai) {
-            if (ai.skip) return { skip: true, value: numeric ? 0 : '' };
+            if (ai.skip && !freeText) return { skip: true, value: numeric ? 0 : '' };
             if (numeric) {
                 const n = typeof ai.value === 'number' ? ai.value : extractSpokenNumber(String(ai.value));
                 return { skip: false, value: n != null && !isNaN(n) ? n : 0 };
@@ -1718,7 +1781,7 @@ Rules:
         resetVoiceSessionState();
         voiceSession.active = true;
         voiceSession.stepIndex = 0;
-        voiceSession.draft = { name: '', phone: '', proc: '', due: 0, paid: 0, teeth: [] };
+        voiceSession.draft = { name: '', proc: '' };
         setVoiceStatus(t('voiceStarting'));
         await askCurrentStep();
     }
@@ -1882,7 +1945,7 @@ Rules:
         setVoiceStatus(t('voiceParsing') + ' «' + spoken + '»');
 
         try {
-            const result = await interpretAnswer(step.field, spoken, !!step.numeric);
+            const result = await interpretAnswer(step.field, spoken, !!step.numeric, !!step.freeText);
             if (!voiceSession.active) return;
 
             if (result.skip && step.required) {
@@ -1898,7 +1961,10 @@ Rules:
                 setVoiceStatus(t('voiceSkipped') + ': ' + step.field);
             } else {
                 voiceSession.draft[step.field] = result.value;
-                setVoiceStatus(t('voiceGot') + ' ' + step.field + ': ' + result.value);
+                const preview = String(result.value).length > 80
+                    ? String(result.value).slice(0, 80) + '…'
+                    : result.value;
+                setVoiceStatus(t('voiceGot') + ' ' + step.field + ': ' + preview);
             }
 
             voiceSession.stepIndex++;
@@ -1924,23 +1990,20 @@ Rules:
         const d = voiceSession.draft;
         let name = (d.name || '').toString().trim();
         if (!name) name = lang === 'ar' ? 'مريض' : 'Patient';
-        const phone = (d.phone || '').toString().trim();
         let proc = (d.proc || '').toString().trim() || t('procExam');
-        const due = parseFloat(d.due) || 0;
-        const paid = parseFloat(d.paid) || 0;
 
         const existing = patients.find(p => p.name === name);
         const id = existing ? existing.id : nextId();
         const uid = 'u' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
         patients.push({
-            uid, id, name, phone,
+            uid, id, name, phone: '',
             date: new Date().toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB'),
-            proc, due, paid, teeth: []
+            proc, due: 0, paid: 0, teeth: []
         });
         persist();
         renderSchedule();
 
-        const doneMsg = t('voiceDone') + ': ' + name + ' · ' + proc + ' · ' + t('due') + ' ' + due + ' / ' + t('paid') + ' ' + paid + ' ' + t('markTeethHint');
+        const doneMsg = t('voiceDone') + ': ' + name + ' · ' + proc + ' ' + t('markTeethHint');
         resetVoiceSessionState();
         setVoiceStatus(doneMsg, 10000);
         await speakText(
@@ -1948,6 +2011,8 @@ Rules:
                 ? ('تم حفظ سجل ' + name)
                 : ('Record saved for ' + name)
         );
+        // Open teeth picker when no teeth selected yet (always after voice)
+        openTeethModal(uid);
     }
 
     // Prevent context menu / focus issues on long-press (mobile)
@@ -1962,6 +2027,92 @@ Rules:
         const btn = document.getElementById('voiceBtn');
         if (btn) btn.addEventListener('contextmenu', e => e.preventDefault());
     })();
+
+    // ── Dental News (Gemini, Arabic professional summaries) ───────────
+    let newsCache = { html: '', at: 0 };
+
+    function openDentalNews() {
+        const modal = document.getElementById('newsModal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        // Auto-load if empty or older than 30 minutes
+        if (!newsCache.html || Date.now() - newsCache.at > 30 * 60 * 1000) {
+            loadDentalNews(false);
+        } else {
+            document.getElementById('newsContent').innerHTML = newsCache.html;
+            document.getElementById('newsStatus').textContent =
+                t('newsUpdated') + new Date(newsCache.at).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB');
+        }
+    }
+
+    function closeDentalNews() {
+        document.getElementById('newsModal').classList.add('hidden');
+    }
+
+    async function loadDentalNews(forceRefresh) {
+        const content = document.getElementById('newsContent');
+        const status = document.getElementById('newsStatus');
+        if (!content || !status) return;
+
+        if (!getApiKey()) {
+            status.textContent = t('noApiKey');
+            content.innerHTML = '<p class="text-red-600">' + escapeHtml(t('noApiKey')) + '</p>';
+            document.getElementById('apiPanel').classList.remove('hidden');
+            refreshApiStatus();
+            return;
+        }
+
+        status.textContent = t('newsLoading');
+        content.innerHTML = '<p class="text-slate-500 animate-pulse">' + escapeHtml(t('newsLoading')) + '</p>';
+
+        try {
+            const today = new Date().toISOString().slice(0, 10);
+            const prompt = `أنت محرر طبي متخصص في طب الأسنان. اكتب بالعربية الفصحى المبسطة والمهنية ملخصاً لآخر أخبار وتطورات طب الأسنان.
+اليوم: ${today}.
+المطلوب:
+- 5 إلى 7 بنود إخبارية حديثة (تقنيات، علاجات، أبحاث، إرشادات صحية فموية).
+- كل بند: عنوان قصير ثم فقرة 2–4 جمل دقيقة وواضحة.
+- أسلوب مهني وواضح لعيادة أسنان.
+- لا تخترع مراجع وهمية بأرقام DOI. إن لم تكن متأكداً من خبر محدد، صِغ التوجه العلمي العام بصدق دون نسب كاذب.
+- لا مقدمات طويلة. ابدأ مباشرة بالعناوين.
+- استخدم هذا التنسيق HTML فقط (بدون markdown):
+<article class="news-item border border-slate-200 rounded-xl p-4 bg-slate-50">
+  <h3 class="font-bold text-sky-800 text-base mb-2">العنوان</h3>
+  <p class="text-slate-700 text-sm leading-relaxed">النص</p>
+</article>
+القواعد: أعد HTML للبنود فقط متتابعة، بدون html أو body.`;
+
+            const raw = await callGemini(prompt, { json: false });
+            let html = (raw || '').trim()
+                .replace(/^```(?:html)?\s*/i, '')
+                .replace(/\s*```$/i, '')
+                .trim();
+
+            // Basic sanitize: strip script tags
+            html = html.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
+            if (!html.includes('news-item') && !html.includes('<h3')) {
+                // Fallback wrap plain text paragraphs
+                const blocks = html.split(/\n{2,}/).filter(Boolean);
+                html = blocks.map(b =>
+                    '<article class="news-item border border-slate-200 rounded-xl p-4 bg-slate-50"><p class="text-slate-700 text-sm leading-relaxed">' +
+                    escapeHtml(b.replace(/<[^>]+>/g, '')) +
+                    '</p></article>'
+                ).join('');
+            }
+
+            if (!html || html.length < 40) throw new Error('Empty news response');
+
+            newsCache = { html, at: Date.now() };
+            content.innerHTML = html;
+            content.setAttribute('dir', 'rtl');
+            status.textContent = t('newsUpdated') + new Date(newsCache.at).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB');
+        } catch (err) {
+            console.error('Dental news error', err);
+            status.textContent = t('newsError') + ' — ' + formatGeminiError(err);
+            content.innerHTML = '<p class="text-red-600">' + escapeHtml(t('newsError')) + '</p><p class="text-xs text-slate-500 mt-2">' +
+                escapeHtml(formatGeminiError(err)) + '</p>';
+        }
+    }
 
     // ── CSV ───────────────────────────────────────────────────────────
     function exportCSV() {
@@ -2053,6 +2204,7 @@ Rules:
 
     document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
     document.getElementById('teethModal').addEventListener('click', e => { if (e.target.id === 'teethModal') closeTeethModal(); });
+    document.getElementById('newsModal').addEventListener('click', e => { if (e.target.id === 'newsModal') closeDentalNews(); });
 
     fillModelSelects();
     setLang(lang);
