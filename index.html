@@ -289,7 +289,7 @@
         <button onclick="addManualRow()" class="bg-indigo-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-indigo-700 text-base app-btn" data-i18n="addManual">إضافة سجل يدوي</button>
         <button id="voiceBtn" type="button"
             class="bg-purple-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-purple-700 select-none text-base app-btn"
-            title="Push to talk"
+            title="Hold to say patient name"
             onmousedown="voicePttDown(event)"
             onmouseup="voicePttUp(event)"
             onmouseleave="voicePttUp(event)"
@@ -297,14 +297,13 @@
             ontouchend="voicePttUp(event)"
             ontouchcancel="voicePttUp(event)">
             <i id="voiceBtnIcon" class="fa-solid fa-microphone ml-2"></i>
-            <span id="voiceBtnLabel" data-i18n="voiceHold">اضغط مطولاً للإجابة · اضغط للبدء</span>
+            <span id="voiceBtnLabel" data-i18n="voiceHold">اضغط مطولاً وقل اسم المريض</span>
         </button>
-        <button id="voiceCancelBtn" type="button" onclick="cancelVoiceSession()"
-            class="hidden bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-3 rounded-xl font-bold text-sm"
-            data-i18n="voiceCancel">إلغاء الصوت</button>
         <select id="sortOrder" onchange="renderSchedule()" class="p-3.5 rounded-xl border border-slate-300 text-base">
-            <option value="asc" data-i18n="sortAsc">الاسم (أ-ي)</option>
-            <option value="desc" data-i18n="sortDesc">الاسم (ي-أ)</option>
+            <option value="name-asc" data-i18n="sortAsc">الاسم (أ-ي)</option>
+            <option value="name-desc" data-i18n="sortDesc">الاسم (ي-أ)</option>
+            <option value="date-asc" data-i18n="sortDateAsc">التاريخ (الأقدم أولاً)</option>
+            <option value="date-desc" data-i18n="sortDateDesc">التاريخ (الأحدث أولاً)</option>
         </select>
         <input type="file" id="fileInput" class="hidden" accept=".csv,text/csv" onchange="importCSV(this)">
         <button onclick="document.getElementById('fileInput').click()" class="bg-slate-600 text-white px-6 py-3.5 rounded-xl text-base app-btn" data-i18n="importCsv">استيراد CSV</button>
@@ -380,49 +379,6 @@
                 </button>
                 <button onclick="closeModal()" class="flex-1 min-w-[120px] bg-slate-800 text-white p-3 rounded-xl" data-i18n="close">إغلاق</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Good Morning Assistant Modal -->
-    <div id="gmModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[55] p-4 no-print">
-        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-900">
-                        <i class="fa-solid fa-sun text-orange-400 ml-2"></i>
-                        <span data-i18n="goodMorning">صباح الخير</span>
-                    </h2>
-                    <p class="text-sm text-slate-500 mt-1" data-i18n="gmHint">مساعد صباحي مدعوم بالكامل بـ Gemini — يحتاج مفتاح API مجاني</p>
-                </div>
-                <button type="button" onclick="closeGoodMorning()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-base font-bold" data-i18n="close">إغلاق</button>
-            </div>
-
-            <div id="gmBriefing" class="mb-4 p-4 rounded-2xl bg-orange-50 border border-orange-200 text-base text-slate-800 leading-relaxed whitespace-pre-line modal-body-text"></div>
-
-            <div class="mb-3 flex flex-wrap items-center gap-2">
-                <span class="text-sm font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-600" data-i18n="gmSourceLabel">مصدر الرد:</span>
-                <span id="gmSourceBadge" class="text-sm font-bold px-2 py-1 rounded-lg bg-violet-100 text-violet-800">Gemini</span>
-            </div>
-
-            <div id="gmChat" class="space-y-2 max-h-52 overflow-y-auto mb-4 text-base"></div>
-
-            <p id="gmStatus" class="status-msg text-base text-orange-800 font-medium mb-3 min-h-[1.25rem]"></p>
-
-            <div class="flex flex-wrap gap-3 items-center">
-                <button id="gmPttBtn" type="button"
-                    class="flex-1 min-w-[180px] bg-orange-500 hover:bg-orange-600 text-white px-5 py-4 rounded-2xl font-bold select-none"
-                    onmousedown="gmPttDown(event)"
-                    onmouseup="gmPttUp(event)"
-                    onmouseleave="gmPttUp(event)"
-                    ontouchstart="gmPttDown(event)"
-                    ontouchend="gmPttUp(event)"
-                    ontouchcancel="gmPttUp(event)">
-                    <i id="gmPttIcon" class="fa-solid fa-microphone ml-2"></i>
-                    <span id="gmPttLabel" data-i18n="gmHoldAsk">اضغط مطولاً واسأل عن مواعيد اليوم</span>
-                </button>
-                <button type="button" onclick="startGoodMorning(true)" class="bg-white border border-orange-300 text-orange-800 px-4 py-3 rounded-xl text-sm font-bold" data-i18n="gmReread">أعد القراءة</button>
-            </div>
-            <p class="text-[11px] text-slate-400 mt-3" data-i18n="gmExamples">مثال: كم مريض اليوم؟ · من أول مريض؟ · رتّب المواعيد · متى موعد أحمد؟</p>
         </div>
     </div>
 
@@ -509,13 +465,14 @@
             appTitle: 'عيادة الأسنان الذكية',
             exportExcel: 'تصدير Excel',
             addManual: 'إضافة سجل يدوي',
-            voiceInput: 'إدخال صوتي موجّه',
-            voiceHold: 'اضغط للبدء · اضغط مطولاً للإجابة',
-            voiceHoldAnswer: 'اضغط مطولاً وأجب…',
-            voiceListeningLabel: 'جاري الاستماع… أفلت عند الانتهاء',
+            voiceInput: 'إدخال اسم بالصوت',
+            voiceHold: 'اضغط مطولاً وقل اسم المريض',
+            voiceListeningLabel: '🔴 جاري الاستماع للاسم… أفلت عند الانتهاء',
             voiceCancel: 'إلغاء الصوت',
             sortAsc: 'الاسم (أ-ي)',
             sortDesc: 'الاسم (ي-أ)',
+            sortDateAsc: 'التاريخ (الأقدم أولاً)',
+            sortDateDesc: 'التاريخ (الأحدث أولاً)',
             importCsv: 'استيراد CSV',
             colId: 'الرقم', colName: 'اسم المريض', colPhone: 'الهاتف',
             colDate: 'التاريخ والوقت', colProc: 'الإجراء', colTeeth: 'الأسنان',
@@ -536,41 +493,16 @@
             promptDue: 'المستحقات:', promptPaid: 'المدفوعات:',
             confirmDelete: 'حذف هذا السجل؟',
             voiceUnsupported: 'الإدخال الصوتي غير مدعوم. استخدم Chrome.',
-            voiceListening: '🔴 جاري الاستماع… تكلم الآن ثم أفلت الزر',
-            voiceParsing: '⏳ جاري فهم الإجابة…',
-            voiceError: 'تعذر التعرف على الصوت — أعد المحاولة مع الضغط المطوّل',
-            voiceDone: 'تم حفظ السجل',
-            voiceAskName: 'ما اسم المريض؟',
-            voiceAskPhone: 'ما رقم الهاتف؟ قل تخطي إن لم يوجد.',
-            voiceAskProc: 'صف الإجراء أو العلاج الذي تم. يمكنك التحدث بالتفصيل.',
-            voiceAskDue: 'كم المبلغ المستحق؟',
-            voiceAskPaid: 'كم المبلغ المدفوع؟',
-            voiceGot: 'تم تسجيل',
-            voiceSkipped: 'تم التخطي',
-            voiceHoldToAnswer: 'اضغط مطولاً على زر الميكروفون وأجب، ثم أفلت',
-            voiceStarting: 'بدء المساعد الصوتي (Gemini)… اسم المريض ثم الإجراء',
-            voiceCancelled: 'تم إلغاء الإدخال الصوتي',
-            voiceProcessing: 'جاري حفظ السجل…',
-            voiceEmptyAnswer: 'لم أسمع إجابة — اضغط مطولاً وحاول مرة أخرى',
-            voiceNeedKey: 'الإدخال الصوتي يعتمد على Gemini فقط. أضف مفتاح API المجاني أولاً.',
-            voiceGeminiParse: '⏳ Gemini يفهم الإجابة…',
-            markTeethHint: '— انقر أيقونة الأسنان لتحديد الأسنان المصابة',
+            voiceListening: '🔴 جاري الاستماع للاسم… أفلت عند الانتهاء',
+            voiceParsing: '⏳ جاري حفظ الاسم…',
+            voiceError: 'تعذر التعرف على الصوت — أعد المحاولة',
+            voiceDone: 'تم إضافة السجل بالاسم',
+            voiceEmptyAnswer: 'لم أسمع اسماً — اضغط مطولاً وقل اسم المريض',
+            markTeethHint: '— أكمل باقي الحقول يدوياً في الجدول',
             aiAftercareNotice: 'سجلات المرضى تتضمن تعليمات ما بعد العلاج مولّدة بالذكاء الاصطناعي بناءً على الإجراء المسجّل.',
             goodMorning: 'صباح الخير',
-            gmHint: 'مساعد صباحي مدعوم بالكامل بـ Gemini — يحتاج مفتاح API مجاني',
-            gmHoldAsk: 'اضغط مطولاً واسأل عن مواعيد اليوم',
-            gmListening: '🔴 جاري الاستماع… أفلت عند الانتهاء',
-            gmThinking: 'Gemini يفكّر…',
-            gmReread: 'أعد القراءة',
-            gmExamples: 'مثال: كم مريض اليوم؟ · من أول مريض؟ · هل يوجد خلع؟ · اقرأ الجدول مرة أخرى',
-            gmSourceLabel: 'مصدر الرد:',
-            gmSourceLocal: 'محلي',
-            gmSourceGemini: 'Gemini AI',
-            gmNoAppts: 'صباح الخير! لا توجد مواعيد مسجّلة لليوم. يوم هادئ في العيادة.',
-            gmEmptyAnswer: 'لم أسمع سؤالاً — اضغط مطولاً وحاول مرة أخرى',
-            gmAskPrompt: 'اسألني عن مواعيد اليوم بالضغط المطوّل على زر الميكروفون (Gemini).',
-            gmNeedKey: 'ميزة «صباح الخير» تعمل بـ Gemini فقط. أضف مفتاحك المجاني من زر مفتاح Gemini.',
-            gmGenerating: 'Gemini يجهّز تحية الصباح وقراءة المواعيد…',
+            gmNoAppts: 'صباح الخير. لا توجد مواعيد مسجّلة لليوم.',
+            gmSpeaking: 'جاري قراءة مواعيد اليوم…',
             noApiKey: 'أدخل مفتاح Gemini API أولاً (زر مفتاح Gemini أعلى الصفحة)',
             apiError: 'خطأ من Gemini API',
             exportDone: 'تم التصدير', importDone: 'تم الاستيراد', importError: 'خطأ في قراءة الملف',
@@ -605,12 +537,14 @@
             appTitle: 'Smart Dental Clinic',
             exportExcel: 'Export Excel',
             addManual: 'Add Manual Record',
-            voiceInput: 'Guided voice input',
-            voiceHold: 'Tap to start · hold to answer',
-            voiceHoldAnswer: 'Hold & answer…',
-            voiceListeningLabel: 'Listening… release when done',
+            voiceInput: 'Voice name input',
+            voiceHold: 'Hold and say patient name',
+            voiceListeningLabel: '🔴 Listening for name… release when done',
             voiceCancel: 'Cancel voice',
-            sortAsc: 'Name (A-Z)', sortDesc: 'Name (Z-A)',
+            sortAsc: 'Name (A-Z)',
+            sortDesc: 'Name (Z-A)',
+            sortDateAsc: 'Date (oldest first)',
+            sortDateDesc: 'Date (newest first)',
             importCsv: 'Import CSV',
             colId: 'ID', colName: 'Patient Name', colPhone: 'Phone',
             colDate: 'Date & Time', colProc: 'Procedure', colTeeth: 'Teeth',
@@ -631,41 +565,16 @@
             promptDue: 'Amount due:', promptPaid: 'Amount paid:',
             confirmDelete: 'Delete this record?',
             voiceUnsupported: 'Voice input not supported. Use Chrome.',
-            voiceListening: '🔴 Listening… speak now, then release',
-            voiceParsing: '⏳ Understanding your answer…',
-            voiceError: 'Could not recognize speech — hold and try again',
-            voiceDone: 'Record saved',
-            voiceAskName: "What is the patient's name?",
-            voiceAskPhone: 'What is the phone number? Say skip if none.',
-            voiceAskProc: 'Describe the procedure or treatment performed. You may speak in detail.',
-            voiceAskDue: 'What is the amount due?',
-            voiceAskPaid: 'What amount was paid?',
-            voiceGot: 'Got',
-            voiceSkipped: 'Skipped',
-            voiceHoldToAnswer: 'Hold the microphone button, answer, then release',
-            voiceStarting: 'Starting Gemini voice assistant… name then procedure',
-            voiceCancelled: 'Voice input cancelled',
-            voiceProcessing: 'Saving the record…',
-            voiceEmptyAnswer: 'No answer heard — hold the button and try again',
-            voiceNeedKey: 'Voice input is Gemini-only. Add your free API key first.',
-            voiceGeminiParse: '⏳ Gemini is understanding your answer…',
-            markTeethHint: '— click the teeth icon to mark affected teeth',
+            voiceListening: '🔴 Listening for name… release when done',
+            voiceParsing: '⏳ Saving name…',
+            voiceError: 'Could not recognize speech — try again',
+            voiceDone: 'Record added with name',
+            voiceEmptyAnswer: 'No name heard — hold and say the patient name',
+            markTeethHint: '— fill the other fields manually in the table',
             aiAftercareNotice: 'Patient records include AI-generated aftercare instructions based on the recorded procedure.',
             goodMorning: 'Good Morning',
-            gmHint: 'Fully Gemini-powered morning assistant — free API key required',
-            gmHoldAsk: 'Hold and ask about today’s schedule',
-            gmListening: '🔴 Listening… release when done',
-            gmThinking: 'Gemini is thinking…',
-            gmReread: 'Read again',
-            gmExamples: 'e.g. How many patients today? · Who is first? · Any extractions? · Read the schedule again',
-            gmSourceLabel: 'Answer source:',
-            gmSourceLocal: 'Local',
-            gmSourceGemini: 'Gemini AI',
-            gmNoAppts: 'Good morning! There are no appointments recorded for today. A quiet clinic day.',
-            gmEmptyAnswer: 'No question heard — hold the mic and try again',
-            gmAskPrompt: 'Hold the mic to ask about today’s appointments (Gemini).',
-            gmNeedKey: 'Good Morning is Gemini-only. Add your free key via the Gemini Key button.',
-            gmGenerating: 'Gemini is preparing your morning greeting and schedule…',
+            gmNoAppts: 'Good morning. There are no appointments recorded for today.',
+            gmSpeaking: 'Reading today’s appointments…',
             noApiKey: 'Enter your Gemini API key first (Gemini Key button in the header)',
             apiError: 'Gemini API error',
             exportDone: 'Export complete', importDone: 'Import complete', importError: 'Error reading file',
@@ -908,8 +817,15 @@
         });
         const sort = document.getElementById('sortOrder');
         if (sort) {
-            sort.options[0].text = t('sortAsc');
-            sort.options[1].text = t('sortDesc');
+            const labels = {
+                'name-asc': t('sortAsc'),
+                'name-desc': t('sortDesc'),
+                'date-asc': t('sortDateAsc'),
+                'date-desc': t('sortDateDesc')
+            };
+            Array.from(sort.options).forEach(opt => {
+                if (labels[opt.value]) opt.text = labels[opt.value];
+            });
         }
         document.getElementById('langAr').className =
             'px-3 py-2 text-sm font-bold ' + (lang === 'ar' ? 'bg-blue-600' : 'bg-slate-700');
@@ -1201,10 +1117,18 @@
         if (!tbody) return;
         cellEditState = null;
         tbody.innerHTML = '';
-        const order = document.getElementById('sortOrder')?.value || 'asc';
+        const order = document.getElementById('sortOrder')?.value || 'name-asc';
         const sorted = [...patients].sort((a, b) => {
+            if (order === 'date-asc' || order === 'date-desc') {
+                const ta = parsePatientDate(a.date);
+                const tb = parsePatientDate(b.date);
+                const va = ta ? ta.getTime() : (order === 'date-asc' ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER);
+                const vb = tb ? tb.getTime() : (order === 'date-asc' ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER);
+                if (va !== vb) return order === 'date-asc' ? va - vb : vb - va;
+                return (a.name || '').localeCompare(b.name || '', lang === 'ar' ? 'ar' : 'en');
+            }
             const cmp = (a.name || '').localeCompare(b.name || '', lang === 'ar' ? 'ar' : 'en');
-            return order === 'asc' ? cmp : -cmp;
+            return order === 'name-desc' ? -cmp : cmp;
         });
 
         sorted.forEach((p, index) => {
@@ -1631,24 +1555,13 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         return JSON.parse(s);
     }
 
-    // ── Guided Push-to-Talk voice assistant ────────────────────────────
-    // Only two questions: patient name + free-text procedure description
-    // Press once (idle) → start conversation + TTS question
-    // Hold while answering → SpeechRecognition; release → process field
-    const VOICE_STEPS = [
-        { field: 'name', askKey: 'voiceAskName', required: true },
-        { field: 'proc', askKey: 'voiceAskProc', required: true, freeText: true }
-    ];
-
-    const voiceSession = {
-        active: false,
-        stepIndex: 0,
-        draft: {},
-        phase: 'idle', // idle | speaking | awaiting_answer | listening | processing
+    // ── Simple name-only voice input (push-to-talk) ─────────────────
+    const voiceState = {
         holding: false,
         recognition: null,
         transcript: '',
-        pressToken: 0
+        pressToken: 0,
+        processing: false
     };
 
     function speechLang() {
@@ -1659,23 +1572,15 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         const btn = document.getElementById('voiceBtn');
         const label = document.getElementById('voiceBtnLabel');
         const icon = document.getElementById('voiceBtnIcon');
-        const cancel = document.getElementById('voiceCancelBtn');
         if (!btn || !label) return;
-
         btn.classList.remove('voice-listening', 'voice-ready-answer', 'voice-busy', 'bg-purple-600');
-        if (cancel) cancel.classList.toggle('hidden', !voiceSession.active);
-
-        if (voiceSession.phase === 'listening') {
+        if (voiceState.holding) {
             btn.classList.add('voice-listening');
             label.textContent = t('voiceListeningLabel');
             if (icon) icon.className = 'fa-solid fa-microphone-lines ml-2';
-        } else if (voiceSession.phase === 'awaiting_answer') {
-            btn.classList.add('voice-ready-answer');
-            label.textContent = t('voiceHoldAnswer');
-            if (icon) icon.className = 'fa-solid fa-microphone ml-2';
-        } else if (voiceSession.phase === 'speaking' || voiceSession.phase === 'processing') {
+        } else if (voiceState.processing) {
             btn.classList.add('voice-busy', 'bg-purple-600');
-            label.textContent = voiceSession.phase === 'speaking' ? '…' : t('voiceParsing');
+            label.textContent = t('voiceParsing');
             if (icon) icon.className = 'fa-solid fa-spinner fa-spin ml-2';
         } else {
             btn.classList.add('bg-purple-600');
@@ -1708,94 +1613,21 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
             };
             u.onend = finish;
             u.onerror = finish;
-            // Fallback if onend never fires
-            setTimeout(finish, Math.min(15000, 2000 + text.length * 80));
+            setTimeout(finish, Math.min(20000, 2000 + String(text).length * 70));
             window.speechSynthesis.speak(u);
         });
     }
 
-    /** Gemini-only field extraction from speech transcript (no local keyword parsing) */
-    async function interpretAnswerWithGemini(field, spokenText) {
-        if (!getApiKey()) {
-            const e = new Error(t('voiceNeedKey'));
-            e.geminiDetail = t('voiceNeedKey');
-            throw e;
-        }
-        const trimmed = (spokenText || '').trim();
-        if (!trimmed) return { skip: true, value: '' };
-
-        const langName = lang === 'ar' ? 'Arabic' : 'English';
-        let prompt;
-
-        if (field === 'name') {
-            prompt = `You are a dental clinic data extractor. Extract ONLY the patient full name from a speech transcript.
-Output language for the name: keep as spoken (usually ${langName}).
-Return ONLY valid JSON: {"value":"full name string","skip":false,"confidence":0.0}
-
-Rules:
-- value = person name only (no procedure, no numbers unless part of the name).
-- If the user clearly refuses / says skip / no name: {"value":"","skip":true,"confidence":1}
-- Fix obvious speech-to-text name errors when clear; do not invent a name.
-- If unclear, set the best guess and lower confidence.
-
-Few-shot examples:
-Transcript: "المريض اسمه أحمد محمد العلي"
-→ {"value":"أحمد محمد العلي","skip":false,"confidence":0.95}
-
-Transcript: "patient name is Sarah Johnson"
-→ {"value":"Sarah Johnson","skip":false,"confidence":0.95}
-
-Transcript: "تخطي" / "skip"
-→ {"value":"","skip":true,"confidence":1}
-
-Transcript: """${trimmed}"""`;
-        } else if (field === 'proc') {
-            prompt = `You are a dental clinic documentation assistant. From a speech transcript, extract a clean clinical procedure / treatment note.
-Output language: ${langName} (prefer the language of the transcript).
-Return ONLY valid JSON: {"value":"clinical procedure text","skip":false,"confidence":0.0}
-
-Rules:
-- value may be long free text (1–5 sentences). Preserve clinical details (tooth numbers if said, materials, anesthesia, etc.).
-- Clean speech-to-text noise; do NOT invent treatments that were not mentioned.
-- If user says skip / none / no procedure: skip=true and value="".
-- Do not include patient name unless it is part of the clinical note by mistake—prefer procedure only.
-
-Few-shot examples:
-Transcript: "سوينا له حشو تجميلي على السن ستاشر مع تخدير موضعي"
-→ {"value":"حشو تجميلي على السن 16 مع تخدير موضعي","skip":false,"confidence":0.9}
-
-Transcript: "we did a root canal on the lower left first molar and temporary filling"
-→ {"value":"Root canal treatment on the lower left first molar with temporary filling","skip":false,"confidence":0.9}
-
-Transcript: "خلع ضرس العقل العلوي الأيمن مع خياطة"
-→ {"value":"خلع ضرس العقل العلوي الأيمن مع خياطة","skip":false,"confidence":0.92}
-
-Transcript: """${trimmed}"""`;
-        } else {
-            prompt = `Extract dental form field "${field}" from speech.
-Return ONLY JSON: {"value": string, "skip": boolean}
-Transcript: """${trimmed}"""`;
-        }
-
-        const raw = await callGemini(prompt, { json: true });
-        let data;
-        try {
-            data = parseGeminiJson(raw);
-        } catch (e) {
-            const err = new Error('Invalid JSON from Gemini: ' + String(raw).slice(0, 200));
-            err.geminiDetail = err.message;
-            throw err;
-        }
-
-        if (data.skip) return { skip: true, value: field === 'proc' || field === 'name' ? '' : (data.value ?? '') };
-        const value = data.value != null ? String(data.value).trim() : '';
-        if (!value) return { skip: true, value: '' };
-        return { skip: false, value };
+    function cleanSpokenName(raw) {
+        let s = (raw || '').trim();
+        s = s.replace(/^(اسم المريض|المريض اسمه|اسمه|اسمها|patient name is|the patient is|patient is|name is)\s*/i, '');
+        s = s.replace(/[.،,]+$/g, '').trim();
+        return s;
     }
 
     function abortRecognition() {
-        const rec = voiceSession.recognition;
-        voiceSession.recognition = null;
+        const rec = voiceState.recognition;
+        voiceState.recognition = null;
         if (!rec) return;
         try {
             rec.onresult = null;
@@ -1807,302 +1639,132 @@ Transcript: """${trimmed}"""`;
         }
     }
 
-    function resetVoiceSessionState() {
-        abortRecognition();
-        stopSpeechSynth();
-        voiceSession.active = false;
-        voiceSession.stepIndex = 0;
-        voiceSession.draft = {};
-        voiceSession.phase = 'idle';
-        voiceSession.holding = false;
-        voiceSession.transcript = '';
-        updateVoiceButtonUI();
-    }
-
-    function cancelVoiceSession() {
-        resetVoiceSessionState();
-        setVoiceStatus(t('voiceCancelled'), 5000);
-    }
-
-    async function beginGuidedFlow() {
-        if (!getApiKey()) {
-            setVoiceStatus(t('voiceNeedKey'), 10000);
-            document.getElementById('apiPanel').classList.remove('hidden');
-            refreshApiStatus();
-            return;
-        }
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) {
-            setVoiceStatus(t('voiceUnsupported'), 8000);
-            return;
-        }
-        // Gemini-only understanding of each spoken answer
-        resetVoiceSessionState();
-        voiceSession.active = true;
-        voiceSession.stepIndex = 0;
-        voiceSession.draft = { name: '', proc: '' };
-        setVoiceStatus(t('voiceStarting'));
-        await askCurrentStep();
-    }
-
-    async function askCurrentStep() {
-        if (!voiceSession.active) return;
-        const step = VOICE_STEPS[voiceSession.stepIndex];
-        if (!step) {
-            await finishGuidedRecord();
-            return;
-        }
-        voiceSession.phase = 'speaking';
-        updateVoiceButtonUI();
-        const q = t(step.askKey);
-        setVoiceStatus('💬 ' + q);
-        await speakText(q);
-        if (!voiceSession.active) return;
-        voiceSession.phase = 'awaiting_answer';
-        updateVoiceButtonUI();
-        setVoiceStatus('💬 ' + q + ' — ' + t('voiceHoldToAnswer'));
-    }
-
     let lastTouchPttAt = 0;
 
     function voicePttDown(ev) {
-        if (ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-        }
-        // Ignore synthetic mouse events after touch
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         if (ev && ev.type === 'touchstart') lastTouchPttAt = Date.now();
         if (ev && ev.type === 'mousedown' && Date.now() - lastTouchPttAt < 600) return;
-        // Ignore right-click
         if (ev && ev.type === 'mousedown' && ev.button !== 0) return;
-
-        if (voiceSession.phase === 'speaking' || voiceSession.phase === 'processing') return;
-
-        // Idle → start guided conversation (do not listen yet)
-        if (!voiceSession.active || voiceSession.phase === 'idle') {
-            beginGuidedFlow();
-            return;
-        }
-
-        // Awaiting answer → start push-to-talk listening
-        if (voiceSession.phase === 'awaiting_answer') {
-            startPttListening();
-        }
+        if (voiceState.holding || voiceState.processing) return;
+        startNameListening();
     }
 
     function voicePttUp(ev) {
-        if (ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-        }
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         if (ev && ev.type === 'touchend') lastTouchPttAt = Date.now();
         if (ev && (ev.type === 'mouseup' || ev.type === 'mouseleave') && Date.now() - lastTouchPttAt < 600) {
-            // touchend already handled; skip duplicate mouseup
-            if (!voiceSession.holding) return;
+            if (!voiceState.holding) return;
         }
-        if (!voiceSession.holding && voiceSession.phase !== 'listening') return;
-        stopPttListeningAndProcess();
+        if (!voiceState.holding) return;
+        stopNameListeningAndSave();
     }
 
-    // Esc cancels guided voice session
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && voiceSession.active) {
-            cancelVoiceSession();
-        }
-    });
-
-    function startPttListening() {
+    function startNameListening() {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) {
             setVoiceStatus(t('voiceUnsupported'), 8000);
             return;
         }
         abortRecognition();
-        voiceSession.holding = true;
-        voiceSession.transcript = '';
-        voiceSession.phase = 'listening';
-        voiceSession.pressToken++;
-        const token = voiceSession.pressToken;
+        voiceState.holding = true;
+        voiceState.transcript = '';
+        voiceState.pressToken++;
+        const token = voiceState.pressToken;
         updateVoiceButtonUI();
         setVoiceStatus(t('voiceListening'));
 
         const rec = new SR();
-        voiceSession.recognition = rec;
+        voiceState.recognition = rec;
         rec.lang = speechLang();
         rec.interimResults = true;
-        rec.maxAlternatives = 1;
         rec.continuous = true;
+        rec.maxAlternatives = 1;
 
         rec.onresult = (e) => {
-            if (token !== voiceSession.pressToken) return;
+            if (token !== voiceState.pressToken) return;
             let finalText = '';
             let interim = '';
             for (let i = 0; i < e.results.length; i++) {
-                const r = e.results[i];
-                if (r.isFinal) finalText += r[0].transcript;
-                else interim += r[0].transcript;
+                if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+                else interim += e.results[i][0].transcript;
             }
-            if (finalText) voiceSession.transcript = (voiceSession.transcript + ' ' + finalText).trim();
-            const live = (voiceSession.transcript + ' ' + interim).trim();
+            if (finalText) voiceState.transcript = (voiceState.transcript + ' ' + finalText).trim();
+            const live = (voiceState.transcript + ' ' + interim).trim();
             if (live) setVoiceStatus(t('voiceListening') + ' «' + live + '»');
         };
-
         rec.onerror = (ev) => {
-            if (token !== voiceSession.pressToken) return;
-            // 'aborted' / 'no-speech' handled on release
-            if (ev.error === 'aborted') return;
-            console.warn('SpeechRecognition error', ev.error);
+            if (token !== voiceState.pressToken) return;
+            if (ev.error === 'aborted' || ev.error === 'no-speech') return;
+            console.warn('Speech error', ev.error);
             if (ev.error === 'not-allowed') {
-                setVoiceStatus(t('voiceError') + ' (mic permission)', 10000);
-                resetVoiceSessionState();
+                setVoiceStatus(t('voiceError') + ' (mic)', 8000);
+                voiceState.holding = false;
+                abortRecognition();
+                updateVoiceButtonUI();
             }
         };
-
         rec.onend = () => {
-            // Browser may auto-stop; if still holding, restart
-            if (token !== voiceSession.pressToken) return;
-            if (voiceSession.holding && voiceSession.phase === 'listening') {
-                try { rec.start(); } catch (e) { /* ignore restart fail */ }
+            if (token !== voiceState.pressToken) return;
+            if (voiceState.holding) {
+                try { rec.start(); } catch (e) { /* ignore */ }
             }
         };
-
         try {
             rec.start();
         } catch (e) {
-            console.error(e);
-            setVoiceStatus(t('voiceError'), 8000);
-            voiceSession.holding = false;
-            voiceSession.phase = 'awaiting_answer';
+            voiceState.holding = false;
             updateVoiceButtonUI();
+            setVoiceStatus(t('voiceError'), 8000);
         }
     }
 
-    async function stopPttListeningAndProcess() {
-        if (!voiceSession.holding && voiceSession.phase !== 'listening') return;
-        voiceSession.holding = false;
-        const token = voiceSession.pressToken;
-        // Capture transcript; stop recognition
+    async function stopNameListeningAndSave() {
+        voiceState.holding = false;
+        const token = voiceState.pressToken;
         abortRecognition();
+        updateVoiceButtonUI();
+        await new Promise(r => setTimeout(r, 150));
+        if (token !== voiceState.pressToken) return;
 
-        // Brief wait for final results that may still flush
-        await new Promise(r => setTimeout(r, 180));
-        if (token !== voiceSession.pressToken || !voiceSession.active) return;
-
-        const spoken = (voiceSession.transcript || '').trim();
-        const step = VOICE_STEPS[voiceSession.stepIndex];
-        if (!step) return;
-
-        if (!spoken) {
-            setVoiceStatus(t('voiceEmptyAnswer'));
-            voiceSession.phase = 'awaiting_answer';
+        const name = cleanSpokenName(voiceState.transcript);
+        if (!name) {
+            setVoiceStatus(t('voiceEmptyAnswer'), 6000);
             updateVoiceButtonUI();
             return;
         }
 
-        voiceSession.phase = 'processing';
+        voiceState.processing = true;
         updateVoiceButtonUI();
-        setVoiceStatus(t('voiceGeminiParse') + ' «' + spoken + '»');
-
-        try {
-            // Exclusive Gemini understanding — no local keyword parsing
-            const result = await interpretAnswerWithGemini(step.field, spoken);
-            if (!voiceSession.active) return;
-
-            if (result.skip && step.required) {
-                setVoiceStatus(t('voiceEmptyAnswer'));
-                voiceSession.phase = 'awaiting_answer';
-                updateVoiceButtonUI();
-                await speakText(t(step.askKey));
-                return;
-            }
-
-            if (result.skip) {
-                voiceSession.draft[step.field] = '';
-                setVoiceStatus(t('voiceSkipped') + ': ' + step.field);
-            } else {
-                voiceSession.draft[step.field] = result.value;
-                const preview = String(result.value).length > 80
-                    ? String(result.value).slice(0, 80) + '…'
-                    : result.value;
-                setVoiceStatus(t('voiceGot') + ' ' + step.field + ': ' + preview);
-            }
-
-            voiceSession.stepIndex++;
-            if (voiceSession.stepIndex >= VOICE_STEPS.length) {
-                await finishGuidedRecord();
-            } else {
-                await askCurrentStep();
-            }
-        } catch (err) {
-            console.error(err);
-            setVoiceStatus(t('apiError') + ' — ' + formatGeminiError(err), 14000);
-            voiceSession.phase = 'awaiting_answer';
-            updateVoiceButtonUI();
-        }
-    }
-
-    async function finishGuidedRecord() {
-        if (!voiceSession.active) return;
-        voiceSession.phase = 'processing';
-        updateVoiceButtonUI();
-        setVoiceStatus(t('voiceProcessing'));
-
-        const d = voiceSession.draft;
-        let name = (d.name || '').toString().trim();
-        if (!name) name = lang === 'ar' ? 'مريض' : 'Patient';
-        let proc = (d.proc || '').toString().trim() || t('procExam');
+        setVoiceStatus(t('voiceParsing') + ' «' + name + '»');
 
         const existing = patients.find(p => p.name === name);
         const id = existing ? existing.id : nextId();
         const uid = 'u' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
         patients.push({
-            uid, id, name, phone: '',
-            date: new Date().toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB'),
-            proc, due: 0, paid: 0, teeth: []
+            uid,
+            id,
+            name,
+            phone: '',
+            date: '',
+            proc: '',
+            due: 0,
+            paid: 0,
+            teeth: []
         });
         persist();
         renderSchedule();
-
-        const doneMsg = t('voiceDone') + ': ' + name + ' · ' + proc + ' ' + t('markTeethHint');
-        resetVoiceSessionState();
-        setVoiceStatus(doneMsg, 10000);
-        await speakText(
-            lang === 'ar'
-                ? ('تم حفظ سجل ' + name)
-                : ('Record saved for ' + name)
-        );
-        // Open teeth picker only when no teeth are selected yet
-        const idx = findIndexByUid(uid);
-        if (idx >= 0 && (!patients[idx].teeth || !patients[idx].teeth.length)) {
-            openTeethModal(uid);
-        }
+        voiceState.processing = false;
+        updateVoiceButtonUI();
+        setVoiceStatus(t('voiceDone') + ': ' + name + ' ' + t('markTeethHint'), 8000);
     }
 
-    // Prevent context menu / focus issues on long-press (mobile)
-    document.addEventListener('DOMContentLoaded', () => {
-        const btn = document.getElementById('voiceBtn');
-        if (btn) {
-            btn.addEventListener('contextmenu', e => e.preventDefault());
-        }
-    });
-    // Also bind if script runs after DOM ready
     (function bindVoiceBtnContext() {
         const btn = document.getElementById('voiceBtn');
         if (btn) btn.addEventListener('contextmenu', e => e.preventDefault());
     })();
 
-    // ── Good Morning assistant (local-first schedule Q&A) ─────────────
-    const gmState = {
-        open: false,
-        appts: [],
-        holding: false,
-        recognition: null,
-        transcript: '',
-        pressToken: 0,
-        nextIndex: 0,
-        speaking: false
-    };
-
+    // ── Date helpers + Good Morning (TTS only, no modal) ──────────────
     function sameCalendarDay(a, b) {
         return a.getFullYear() === b.getFullYear()
             && a.getMonth() === b.getMonth()
@@ -2117,7 +1779,6 @@ Transcript: """${trimmed}"""`;
         let d = new Date(s);
         if (!isNaN(d.getTime())) return d;
 
-        // dd/mm/yyyy[, time] or d-m-yyyy
         let m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[^\d]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|ص|م)?)?/i);
         if (m) {
             let day = parseInt(m[1], 10);
@@ -2134,7 +1795,6 @@ Transcript: """${trimmed}"""`;
             if (!isNaN(d.getTime())) return d;
         }
 
-        // yyyy-mm-dd
         m = s.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2}))?/);
         if (m) {
             d = new Date(
@@ -2149,30 +1809,21 @@ Transcript: """${trimmed}"""`;
         return null;
     }
 
-    function formatTimeSpoken(d) {
-        if (!d || isNaN(d.getTime())) {
-            return lang === 'ar' ? 'وقت غير محدد' : 'time not set';
-        }
-        try {
-            return d.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US', {
-                hour: 'numeric',
-                minute: '2-digit'
-            });
-        } catch (e) {
-            return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
-        }
-    }
-
-    function formatTimeDisplay(d, raw) {
+    function formatTimeSpoken(d, raw) {
         if (d && !isNaN(d.getTime())) {
-            const t = formatTimeSpoken(d);
-            // If looks like date-only (00:00), show raw date string snippet
-            if (d.getHours() === 0 && d.getMinutes() === 0 && raw && !/\d{1,2}:\d{2}/.test(raw)) {
+            if (d.getHours() === 0 && d.getMinutes() === 0 && raw && !/\d{1,2}:\d{2}/.test(String(raw))) {
                 return lang === 'ar' ? 'اليوم' : 'today';
             }
-            return t;
+            try {
+                return d.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+            }
         }
-        return raw || (lang === 'ar' ? '—' : '—');
+        return lang === 'ar' ? 'وقت غير محدد' : 'time not set';
     }
 
     function getTodayAppointments() {
@@ -2180,31 +1831,20 @@ Transcript: """${trimmed}"""`;
         const list = [];
         patients.forEach(p => {
             const parsed = parsePatientDate(p.date);
-            // Include if parsed day is today, OR if date string contains today's local date parts
             let isToday = false;
             if (parsed && sameCalendarDay(parsed, now)) isToday = true;
-            else if (!parsed && p.date) {
-                // Fallback: string includes today's day number + month number loosely
-                const day = String(now.getDate());
-                const month = String(now.getMonth() + 1);
-                const year = String(now.getFullYear());
-                const s = String(p.date);
-                if (s.includes(year) && (s.includes('/' + day) || s.includes('-' + day) || s.includes(day + '/') || s.includes(day + '-'))) {
-                    isToday = true;
-                }
-            }
-            // Also treat records created "today" via loose match of locale date
-            if (!isToday && p.date) {
+            else if (p.date) {
                 try {
                     const loc = now.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB');
-                    if (String(p.date).includes(loc.split(',')[0]) || String(p.date).startsWith(loc)) isToday = true;
+                    const s = String(p.date);
+                    if (s.includes(loc.split(',')[0]) || s.startsWith(loc)) isToday = true;
                 } catch (e) { /* ignore */ }
             }
             if (!isToday) return;
             list.push({
                 ...p,
                 _date: parsed,
-                _timeLabel: formatTimeDisplay(parsed, p.date),
+                _timeLabel: formatTimeSpoken(parsed, p.date),
                 _sort: parsed ? parsed.getTime() : Number.MAX_SAFE_INTEGER
             });
         });
@@ -2212,327 +1852,50 @@ Transcript: """${trimmed}"""`;
         return list;
     }
 
-    function toArabicDigits(n) {
-        const map = '٠١٢٣٤٥٦٧٨٩';
-        return String(n).replace(/\d/g, d => map[d]);
-    }
+    function buildSimpleMorningSpeech(appts) {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
 
-    function numSpeak(n) {
-        return lang === 'ar' ? toArabicDigits(n) : String(n);
-    }
+        if (lang === 'ar') {
+            if (!appts.length) {
+                return 'صباح الخير، اليوم تاريخ ' + dateStr + '. لا توجد مواعيد مسجّلة لليوم.';
+            }
+            let s = 'صباح الخير، اليوم تاريخ ' + dateStr + '. لديك المواعيد التالية: ';
+            appts.forEach((p, i) => {
+                const name = p.name || 'مريض';
+                const time = p._timeLabel;
+                s += 'الساعة ' + time + ' ' + name;
+                if (i < appts.length - 1) s += '، ';
+                else s += '.';
+            });
+            return s;
+        }
 
-    function schedulePayload(appts) {
-        return appts.map((p, i) => ({
-            index: i + 1,
-            name: p.name || '',
-            time: p._timeLabel || '',
-            dateRaw: p.date || '',
-            procedure: p.proc || '',
-            due: p.due,
-            paid: p.paid
-        }));
-    }
-
-    async function geminiMorningBriefing(appts) {
-        const schedule = schedulePayload(appts);
-        const prompt = `You are a warm, friendly dental clinic morning assistant speaking to the dentist.
-Language: ${lang === 'ar' ? 'Arabic (clear spoken Arabic suitable for text-to-speech)' : 'natural spoken English'}.
-Today's date: ${new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB')}.
-Appointments JSON (may be empty):
-${JSON.stringify(schedule)}
-
-Write a short spoken morning briefing (8–16 sentences max if many patients, fewer if few):
-1) Warm "good morning" greeting.
-2) How many appointments today.
-3) Read each appointment naturally: name + time + procedure if available.
-4) If empty list: say there are no appointments today and wish a calm day.
-5) End by inviting the dentist to ask questions by holding the mic.
-
-Rules: Plain text only, no markdown, no bullet symbols, natural speech.
-Do not invent patients not in the JSON.`;
-        return (await callGemini(prompt, { json: false })).trim();
-    }
-
-    async function geminiScheduleAnswer(question, appts, chatHistory) {
-        const schedule = schedulePayload(appts);
-        const history = (chatHistory || []).slice(-6).map(h => h.role + ': ' + h.text).join('\n');
-        const prompt = `You are a helpful dental clinic morning assistant having a spoken conversation about TODAY's schedule only.
-Language: ${lang === 'ar' ? 'Arabic for speech' : 'English for speech'}.
-Schedule JSON:
-${JSON.stringify(schedule)}
-Recent chat:
-${history || '(none)'}
-Dentist said: """${question}"""
-
-Answer in 1–4 short spoken sentences. Use ONLY the schedule data (and normal conversational courtesy).
-If asked to re-read the schedule, read names, times, procedures clearly.
-If asked about extractions/fillings/etc., scan procedure fields.
-If unknown, say so politely. No markdown. Plain speech text only.`;
-        return (await callGemini(prompt, { json: false })).trim();
-    }
-
-    function setGmSource(source) {
-        const badge = document.getElementById('gmSourceBadge');
-        if (!badge) return;
-        badge.textContent = t('gmSourceGemini');
-        badge.className = 'text-sm font-bold px-2 py-1 rounded-lg bg-violet-100 text-violet-800';
-    }
-
-    function setGmStatus(msg) {
-        const el = document.getElementById('gmStatus');
-        if (el) el.textContent = msg || '';
-    }
-
-    function appendGmChat(role, text) {
-        const box = document.getElementById('gmChat');
-        if (!box) return;
-        const div = document.createElement('div');
-        div.className = role === 'user'
-            ? 'p-2 rounded-xl bg-slate-100 text-slate-800'
-            : 'p-2 rounded-xl bg-orange-50 text-slate-800 border border-orange-100';
-        div.textContent = (role === 'user' ? '🧑 ' : '🌅 ') + text;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
-    }
-
-    function renderGmApptList(appts) {
-        const el = document.getElementById('gmBriefing');
-        if (!el) return;
         if (!appts.length) {
-            el.textContent = t('gmNoAppts');
-            return;
+            return 'Good morning. Today is ' + dateStr + '. There are no appointments recorded for today.';
         }
-        const lines = appts.map((p, i) =>
-            (i + 1) + '. ' + (p.name || '—') + ' · ' + p._timeLabel +
-            (p.proc ? ' · ' + p.proc : '')
-        );
-        el.textContent = (lang === 'ar'
-            ? ('مواعيد اليوم (' + appts.length + '):\n')
-            : ('Today’s appointments (' + appts.length + '):\n')) + lines.join('\n');
+        let s = 'Good morning. Today is ' + dateStr + '. Your appointments are: ';
+        appts.forEach((p, i) => {
+            s += 'at ' + p._timeLabel + ', ' + (p.name || 'Patient');
+            if (i < appts.length - 1) s += '; ';
+            else s += '.';
+        });
+        return s;
     }
 
-    async function startGoodMorning(rereadOnly) {
-        const modal = document.getElementById('gmModal');
-        if (!modal) return;
-
-        if (!getApiKey()) {
-            modal.classList.remove('hidden');
-            gmState.open = true;
-            setGmStatus(t('gmNeedKey'));
-            document.getElementById('gmBriefing').textContent = t('gmNeedKey');
-            document.getElementById('apiPanel').classList.remove('hidden');
-            refreshApiStatus();
-            return;
-        }
-
-        modal.classList.remove('hidden');
-        gmState.open = true;
-        gmState.appts = getTodayAppointments();
-        gmState.nextIndex = 0;
-        gmState.chatHistory = gmState.chatHistory || [];
-        if (!rereadOnly) {
-            gmState.chatHistory = [];
-            const chat = document.getElementById('gmChat');
-            if (chat) chat.innerHTML = '';
-        }
-        setGmSource('gemini');
-        renderGmApptList(gmState.appts);
-        updateGmPttUI(false);
-        setGmStatus(t('gmGenerating'));
-
+    async function startGoodMorning() {
+        const appts = getTodayAppointments();
+        const speech = buildSimpleMorningSpeech(appts);
+        setVoiceStatus(t('gmSpeaking'), 3000);
         try {
-            const briefing = await geminiMorningBriefing(gmState.appts);
-            const text = briefing || t('gmNoAppts');
-            document.getElementById('gmBriefing').textContent = text;
-            setGmStatus(text);
-            setGmSource('gemini');
-            try {
-                gmState.speaking = true;
-                await speakText(text);
-            } finally {
-                gmState.speaking = false;
-            }
-            setGmStatus(t('gmAskPrompt'));
-        } catch (err) {
-            console.error(err);
-            const msg = t('apiError') + ' — ' + formatGeminiError(err);
-            setGmStatus(msg);
-            document.getElementById('gmBriefing').textContent = msg;
-        }
-    }
-
-    function closeGoodMorning() {
-        gmAbortRecognition();
-        stopSpeechSynth();
-        gmState.open = false;
-        gmState.holding = false;
-        gmState.speaking = false;
-        document.getElementById('gmModal').classList.add('hidden');
-        setGmStatus('');
-        updateGmPttUI(false);
-    }
-
-    function updateGmPttUI(listening) {
-        const btn = document.getElementById('gmPttBtn');
-        const label = document.getElementById('gmPttLabel');
-        const icon = document.getElementById('gmPttIcon');
-        if (!btn) return;
-        if (listening) {
-            btn.classList.add('voice-listening');
-            btn.classList.remove('bg-orange-500');
-            if (label) label.textContent = t('gmListening');
-            if (icon) icon.className = 'fa-solid fa-microphone-lines ml-2';
-        } else {
-            btn.classList.remove('voice-listening');
-            btn.classList.add('bg-orange-500');
-            if (label) label.textContent = t('gmHoldAsk');
-            if (icon) icon.className = 'fa-solid fa-microphone ml-2';
-        }
-    }
-
-    function gmAbortRecognition() {
-        const rec = gmState.recognition;
-        gmState.recognition = null;
-        if (!rec) return;
-        try {
-            rec.onresult = null;
-            rec.onerror = null;
-            rec.onend = null;
-            rec.stop();
+            await speakText(speech);
         } catch (e) {
-            try { rec.abort(); } catch (e2) { /* ignore */ }
+            console.error(e);
         }
+        setVoiceStatus(speech, 12000);
     }
-
-    let gmLastTouchAt = 0;
-    function gmPttDown(ev) {
-        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-        if (ev && ev.type === 'touchstart') gmLastTouchAt = Date.now();
-        if (ev && ev.type === 'mousedown' && Date.now() - gmLastTouchAt < 600) return;
-        if (ev && ev.type === 'mousedown' && ev.button !== 0) return;
-        if (!gmState.open || gmState.speaking) return;
-        if (gmState.holding) return;
-        gmStartListening();
-    }
-
-    function gmPttUp(ev) {
-        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-        if (ev && ev.type === 'touchend') gmLastTouchAt = Date.now();
-        if (ev && (ev.type === 'mouseup' || ev.type === 'mouseleave') && Date.now() - gmLastTouchAt < 600) {
-            if (!gmState.holding) return;
-        }
-        if (!gmState.holding) return;
-        gmStopListeningAndAnswer();
-    }
-
-    function gmStartListening() {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) {
-            setGmStatus(t('voiceUnsupported'));
-            return;
-        }
-        stopSpeechSynth();
-        gmAbortRecognition();
-        gmState.holding = true;
-        gmState.transcript = '';
-        gmState.pressToken++;
-        const token = gmState.pressToken;
-        updateGmPttUI(true);
-        setGmStatus(t('gmListening'));
-
-        const rec = new SR();
-        gmState.recognition = rec;
-        rec.lang = speechLang();
-        rec.interimResults = true;
-        rec.continuous = true;
-        rec.maxAlternatives = 1;
-
-        rec.onresult = (e) => {
-            if (token !== gmState.pressToken) return;
-            let finalText = '';
-            let interim = '';
-            for (let i = 0; i < e.results.length; i++) {
-                if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
-                else interim += e.results[i][0].transcript;
-            }
-            if (finalText) gmState.transcript = (gmState.transcript + ' ' + finalText).trim();
-            const live = (gmState.transcript + ' ' + interim).trim();
-            if (live) setGmStatus(t('gmListening') + ' «' + live + '»');
-        };
-        rec.onerror = (ev) => {
-            if (token !== gmState.pressToken) return;
-            if (ev.error === 'aborted' || ev.error === 'no-speech') return;
-            console.warn('GM speech error', ev.error);
-        };
-        rec.onend = () => {
-            if (token !== gmState.pressToken) return;
-            if (gmState.holding) {
-                try { rec.start(); } catch (e) { /* ignore */ }
-            }
-        };
-        try { rec.start(); } catch (e) {
-            gmState.holding = false;
-            updateGmPttUI(false);
-            setGmStatus(t('voiceError'));
-        }
-    }
-
-    async function gmStopListeningAndAnswer() {
-        gmState.holding = false;
-        const token = gmState.pressToken;
-        gmAbortRecognition();
-        updateGmPttUI(false);
-        await new Promise(r => setTimeout(r, 160));
-        if (token !== gmState.pressToken || !gmState.open) return;
-
-        const q = (gmState.transcript || '').trim();
-        if (!q) {
-            setGmStatus(t('gmEmptyAnswer'));
-            return;
-        }
-        appendGmChat('user', q);
-        gmState.chatHistory = gmState.chatHistory || [];
-        gmState.chatHistory.push({ role: 'user', text: q });
-        setGmStatus(t('gmThinking'));
-        setGmSource('gemini');
-
-        if (!getApiKey()) {
-            setGmStatus(t('gmNeedKey'));
-            appendGmChat('assistant', t('gmNeedKey'));
-            return;
-        }
-
-        try {
-            // Refresh today's list in case data changed
-            gmState.appts = getTodayAppointments();
-            const answer = await geminiScheduleAnswer(q, gmState.appts, gmState.chatHistory);
-            const text = (answer || '').trim() || (lang === 'ar'
-                ? 'عذراً، لم أستطع تكوين إجابة. أعد صياغة السؤال.'
-                : 'Sorry, I could not form an answer. Please rephrase.');
-            gmState.chatHistory.push({ role: 'assistant', text });
-            setGmSource('gemini');
-            appendGmChat('assistant', text);
-            setGmStatus(text);
-            try {
-                gmState.speaking = true;
-                await speakText(text);
-            } finally {
-                gmState.speaking = false;
-            }
-            setGmStatus(t('gmAskPrompt'));
-        } catch (err) {
-            console.error(err);
-            const msg = t('apiError') + ' — ' + formatGeminiError(err);
-            setGmStatus(msg);
-            appendGmChat('assistant', msg);
-        }
-    }
-
-    // Prevent long-press menu on GM PTT
-    (function bindGmPtt() {
-        const btn = document.getElementById('gmPttBtn');
-        if (btn) btn.addEventListener('contextmenu', e => e.preventDefault());
-    })();
 
     // ── CSV ───────────────────────────────────────────────────────────
     function exportCSV() {
@@ -2624,7 +1987,6 @@ If unknown, say so politely. No markdown. Plain speech text only.`;
 
     document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
     document.getElementById('teethModal').addEventListener('click', e => { if (e.target.id === 'teethModal') closeTeethModal(); });
-    document.getElementById('gmModal').addEventListener('click', e => { if (e.target.id === 'gmModal') closeGoodMorning(); });
 
     fillModelSelects();
     setLang(lang);
