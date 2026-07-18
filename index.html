@@ -3,858 +3,1376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام عيادة الأسنان المبسط</title>
-    <!-- Tailwind CSS -->
+    <title>عيادة الأسنان الذكية - نظام إدارة المرضى</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-    
     <style>
-        body { font-family: 'Tajawal', sans-serif; background-color: #f8fafc; }
-        input, select, textarea { border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px; width: 100%; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; }
-        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn-primary { background-color: #2563eb; color: white; border: none; }
-        .btn-primary:hover { background-color: #1d4ed8; }
-        .btn-success { background-color: #16a34a; color: white; border: none; }
-        .btn-success:hover { background-color: #15803d; }
-        .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; }
-        .btn-outline:hover { background-color: #f1f5f9; }
-        
-        /* Inline Edit Styling */
-        .inline-input { border: 1px dashed transparent !important; padding: 4px !important; background: transparent !important; border-radius: 4px !important; box-shadow: none !important; font-weight: inherit; color: inherit; text-align: inherit; }
-        .inline-input:hover { background-color: #fef08a !important; border-color: #ca8a04 !important; cursor: text; }
-        .inline-input:focus { background-color: #fff !important; outline: 2px solid #3b82f6 !important; border-color: transparent !important; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .row-even { background-color: #ffffff; }
+        .row-odd { background-color: #f1f5f9; }
+        input:focus, select:focus { outline: 2px solid #6366f1; }
+        .calc-btn:active { transform: scale(0.95); }
 
-        /* Print Styles */
-        @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
-            .no-print { display: none !important; }
+        /* ── Realistic dental arch ── */
+        .dental-arch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+            padding: 8px;
+            background: linear-gradient(180deg, #fdf2f8 0%, #fce7f3 40%, #fbcfe8 100%);
+            border-radius: 24px;
+            border: 2px solid #f9a8d4;
+        }
+        .dental-arch.mini {
+            padding: 4px;
+            border-radius: 12px;
+            gap: 2px;
+            background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%);
+            border-width: 1px;
+        }
+        .arch-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 1px;
+        }
+        .arch-row.lower { align-items: flex-start; }
+        .arch-label {
+            font-size: 10px;
+            color: #9d174d;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .midline {
+            width: 1px;
+            height: 8px;
+            background: #f472b6;
+            margin: 0 2px;
+            align-self: center;
         }
 
-        /* Calculator Styles */
-        .calc-btn { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 10px; font-weight: bold; font-family: sans-serif; cursor: pointer; transition: 0.1s; }
-        .calc-btn:hover { background: #e2e8f0; }
-        .calc-btn:active { background: #cbd5e1; }
-        .calc-btn.op { background: #e0f2fe; color: #0284c7; }
-        .calc-btn.clear { background: #fee2e2; color: #b91c1c; }
+        .tooth-btn {
+            border: none;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.12s ease;
+            outline: none;
+        }
+        .tooth-btn:hover { transform: scale(1.12); z-index: 2; }
+        .tooth-btn:focus-visible .tooth-svg { filter: drop-shadow(0 0 3px #6366f1); }
+        .tooth-btn .tooth-num {
+            font-size: 8px;
+            font-weight: 700;
+            color: #64748b;
+            line-height: 1;
+            margin-top: 1px;
+        }
+        .dental-arch.mini .tooth-num { display: none; }
+
+        .tooth-svg {
+            display: block;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+            transition: filter 0.15s, opacity 0.15s;
+        }
+        .tooth-btn.active .tooth-svg {
+            filter: drop-shadow(0 0 4px #ef4444) drop-shadow(0 1px 2px rgba(185,28,28,0.5));
+        }
+        .tooth-btn.active .tooth-num { color: #b91c1c; font-weight: 800; }
+
+        /* enamel fill states via CSS variables on SVG */
+        .tooth-btn .enamel { fill: url(#enamelGrad); }
+        .tooth-btn.active .enamel { fill: url(#affectedGrad); }
+        .tooth-btn .root { fill: #f5e6d3; }
+        .tooth-btn.active .root { fill: #fecaca; }
+        .tooth-btn .outline { stroke: #94a3b8; stroke-width: 0.8; fill: none; }
+        .tooth-btn.active .outline { stroke: #b91c1c; stroke-width: 1.2; }
+        .tooth-btn .highlight { fill: rgba(255,255,255,0.55); }
+        .tooth-btn.active .highlight { fill: rgba(255,255,255,0.25); }
+
+        .dental-arch.mini .tooth-svg { width: 14px; height: 20px; }
+        .dental-arch.full .tooth-svg { width: 28px; height: 40px; }
+        .dental-arch.full .tooth-btn.molar .tooth-svg { width: 32px; height: 42px; }
+        .dental-arch.full .tooth-btn.incisor .tooth-svg { width: 22px; height: 38px; }
+        .dental-arch.full .tooth-btn.canine .tooth-svg { width: 24px; height: 44px; }
+
+        .legend-dot {
+            width: 12px; height: 12px; border-radius: 3px; display: inline-block;
+        }
+
+        @media print {
+            body * { visibility: hidden !important; }
+            #printArea, #printArea * { visibility: visible !important; }
+            #printArea {
+                position: absolute;
+                left: 0; top: 0; width: 100%;
+                padding: 24px; background: white;
+            }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
-<body class="text-slate-800">
+<body class="p-4 md:p-8">
+
+    <!-- Hidden SVG gradients (shared) -->
+    <svg width="0" height="0" class="absolute" aria-hidden="true">
+        <defs>
+            <linearGradient id="enamelGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="40%" stop-color="#f8fafc"/>
+                <stop offset="100%" stop-color="#e2e8f0"/>
+            </linearGradient>
+            <linearGradient id="affectedGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#fca5a5"/>
+                <stop offset="50%" stop-color="#ef4444"/>
+                <stop offset="100%" stop-color="#b91c1c"/>
+            </linearGradient>
+        </defs>
+    </svg>
 
     <!-- Header -->
-    <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap justify-between items-center gap-4 no-print">
+    <header class="bg-slate-900 text-white p-6 rounded-2xl mb-6 flex flex-wrap justify-between items-center gap-4 shadow-lg no-print">
         <div>
-            <h1 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-tooth text-blue-600 ml-2"></i>نظام العيادة المبسط</h1>
+            <h1 class="text-2xl font-bold">
+                <i class="fa-solid fa-tooth text-blue-400 ml-2"></i>
+                <span data-i18n="appTitle">عيادة الأسنان الذكية</span>
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">OCTOPUS أخطبوط للحلول البرمجية الذكية</p>
         </div>
-        <div class="flex flex-wrap gap-2 items-center">
-            <button onclick="exportToExcel()" class="btn btn-success text-sm">
-                <i class="fa-solid fa-file-excel ml-1"></i> تصدير Excel
+        <div class="flex flex-wrap gap-3 items-center">
+            <div class="flex rounded-lg overflow-hidden border border-slate-600">
+                <button id="langAr" onclick="setLang('ar')" class="px-3 py-2 text-sm font-bold bg-blue-600">عربي</button>
+                <button id="langEn" onclick="setLang('en')" class="px-3 py-2 text-sm font-bold bg-slate-700">EN</button>
+            </div>
+            <button onclick="toggleApiPanel()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold">
+                <i class="fa-solid fa-key ml-1"></i> <span data-i18n="apiSettings">مفتاح Gemini</span>
             </button>
-            <button onclick="openImportModal()" class="btn btn-outline text-sm">
-                <i class="fa-solid fa-paste ml-1"></i> استيراد بيانات
-            </button>
+            <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-bold" data-i18n="exportExcel">تصدير Excel</button>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-8 no-print">
-        
-        <!-- View 1: Today's Schedule (Moved to Top) -->
-        <section class="bg-white p-4 border border-slate-200 rounded shadow-sm">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-4 gap-4">
-                <h2 class="font-bold text-lg text-blue-800"><i class="fa-regular fa-calendar-check ml-2"></i>جدول المواعيد</h2>
-                
-                <!-- Toolbar for Schedule -->
-                <div class="flex flex-wrap items-center gap-3 bg-slate-50 p-2 rounded border border-slate-200">
-                    <div class="flex items-center gap-1">
-                        <label class="text-xs font-bold text-slate-600">التاريخ:</label>
-                        <input type="date" id="filter-date" onchange="renderSchedule()" class="w-auto text-sm py-1 px-2 h-8">
-                    </div>
-                    
-                    <div class="flex items-center gap-1 border-r border-slate-300 pr-3">
-                        <input type="checkbox" id="show-all-dates" onchange="renderSchedule()" class="w-4 h-4 text-blue-600 rounded">
-                        <label for="show-all-dates" class="text-xs font-bold text-slate-700 cursor-pointer">إظهار الكل</label>
-                    </div>
+    <!-- ═══ Gemini API Key Panel (key hidden after save; per-browser only) ═══ -->
+    <div id="apiPanel" class="hidden bg-amber-50 border-2 border-amber-400 p-5 rounded-2xl mb-6 shadow-sm no-print">
+        <h3 class="font-bold text-amber-900 text-lg mb-2">
+            <i class="fa-solid fa-robot ml-2"></i>
+            <span data-i18n="geminiTitle">مفتاح Gemini API (مجاني)</span>
+        </h3>
+        <p class="text-sm text-amber-900/90 mb-3" data-i18n="shareHint">
+            عند مشاركة الرابط على GitHub: كل مستخدم يُدخل مفتاحه المجاني مرة واحدة. المفتاح يُحفظ فقط في متصفّحه ولا يُرفع مع الملف.
+        </p>
+        <ol class="text-sm text-amber-900/90 mb-3 list-decimal list-inside space-y-1">
+            <li><span data-i18n="step1">افتح</span> <a class="underline text-blue-700" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></li>
+            <li data-i18n="step2">أنشئ مفتاح API مجاني (Create API key)</li>
+            <li data-i18n="step3">الصق المفتاح واضغط حفظ — سيُخفى فوراً ولن يظهر للآخرين</li>
+        </ol>
 
-                    <div class="flex items-center gap-1 border-r border-slate-300 pr-3">
-                        <label class="text-xs font-bold text-slate-600">فرز الأسماء:</label>
-                        <select id="sort-order" onchange="renderSchedule()" class="w-auto text-sm py-1 px-2 h-8">
-                            <option value="time">حسب الوقت</option>
-                            <option value="asc">أ - ي (تصاعدي)</option>
-                            <option value="desc">ي - أ (تنازلي)</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- Locked state: key is saved, never shown again -->
+        <div id="keyLockedBox" class="hidden mb-3 p-4 bg-emerald-50 border border-emerald-300 rounded-xl">
+            <p class="font-bold text-emerald-800 text-sm" data-i18n="keyLockedTitle">✓ المفتاح محفوظ ومخفي</p>
+            <p id="apiStatus" class="text-xs text-emerald-700 mt-1"></p>
+            <p class="text-xs text-slate-500 mt-1" data-i18n="keyHiddenNote">لأمانك لا يمكن عرض المفتاح مرة أخرى. لاستبداله أدخل مفتاحاً جديداً أو امسحه.</p>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <button type="button" onclick="startChangeKey()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-bold" data-i18n="changeKey">تغيير المفتاح</button>
+                <button type="button" onclick="clearApiKey()" class="bg-white border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm font-bold" data-i18n="clearKey">مسح المفتاح</button>
             </div>
-
-            <div class="overflow-x-auto">
-                <p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-circle-info ml-1"></i> تلميح: انقر على أي نص في الجدول لتعديله مباشرة، أو انقر على اسم المريض لفتح السجل والبطاقة.</p>
-                <table class="w-full text-right text-sm">
-                    <thead class="bg-slate-100 text-slate-600">
-                        <tr>
-                            <th class="p-2 border-b w-24">الوقت</th>
-                            <th class="p-2 border-b">رقم الملف</th>
-                            <th class="p-2 border-b">اسم المريض (انقر للتفاصيل)</th>
-                            <th class="p-2 border-b">الإجراء الطـبي</th>
-                            <th class="p-2 border-b w-24">المستحقات</th>
-                            <th class="p-2 border-b w-24">المدفوعات</th>
-                            <th class="p-2 border-b w-16 text-center">حذف</th>
-                        </tr>
-                    </thead>
-                    <tbody id="schedule-tbody" class="divide-y divide-slate-100">
-                        <!-- Data populated by JS -->
-                    </tbody>
-                </table>
-                <div id="schedule-empty" class="text-center text-slate-400 py-8 hidden">لا توجد مواعيد مطابقة للبحث.</div>
-            </div>
-        </section>
-
-        <!-- Add Appointment & Voice Assistant (Moved Below Schedule) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- Voice Assistant Box -->
-            <section class="bg-white p-4 border border-slate-200 rounded shadow-sm flex flex-col justify-center text-center">
-                <div class="mb-4">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-2">
-                        <i class="fa-solid fa-microphone text-3xl"></i>
-                    </div>
-                    <h3 class="font-bold text-lg">المساعد الصوتي</h3>
-                    <p class="text-sm text-slate-500">تحدث بصوتك ليتم تعبئة تفاصيل الموعد تلقائياً باستخدام الذكاء الاصطناعي.</p>
-                </div>
-                <button id="voice-btn" onclick="startVoiceDictation()" class="btn btn-outline w-full py-3 text-blue-600 border-blue-200 hover:bg-blue-50">
-                    <i class="fa-solid fa-play ml-2"></i> ابدأ التحدث الآن
-                </button>
-                <div id="voice-status" class="text-sm text-blue-600 mt-3 font-bold hidden bg-blue-50 p-2 rounded animate-pulse">جاري الاستماع...</div>
-            </section>
-
-            <!-- Manual Form -->
-            <section class="bg-white p-4 border border-slate-200 rounded shadow-sm">
-                <h3 class="font-bold mb-4 border-b pb-2"><i class="fa-solid fa-plus-circle text-green-600 ml-2"></i>تسجيل موعد جديد</h3>
-                <form id="appointment-form" onsubmit="saveAppointment(event)" class="space-y-3">
-                    
-                    <div class="bg-slate-50 p-2 border border-slate-200 rounded mb-2">
-                        <label class="block text-xs font-bold text-slate-600 mb-1">رقم المريض (اتركه فارغاً لإنشاء مريض جديد)</label>
-                        <input type="text" id="form-patient-id" placeholder="مثال: 1001" onblur="fetchPatientData()">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold mb-1">اسم المريض *</label>
-                            <input type="text" id="form-name" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold mb-1">رقم الهاتف</label>
-                            <input type="text" id="form-phone">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold mb-1">التاريخ *</label>
-                            <input type="date" id="form-date" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold mb-1">الوقت *</label>
-                            <input type="time" id="form-time" required>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold mb-1">الإجراء الطبي / العلاج</label>
-                        <input type="text" id="form-treatment" placeholder="مثال: علاج عصب، حشوة...">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 bg-blue-50 p-2 border border-blue-100 rounded mt-2">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">المستحقات (القيمة)</label>
-                            <input type="number" id="form-dues" value="0" min="0" step="any">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">المدفوعات (المقبوض)</label>
-                            <input type="number" id="form-payments" value="0" min="0" step="any">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-full mt-4 py-2">حفظ الموعد في الجدول</button>
-                </form>
-            </section>
         </div>
-    </main>
 
-    <!-- Floating Calculator Icon & Panel -->
-    <div class="fixed bottom-6 left-6 z-40 no-print">
-        <!-- Toggle Button -->
-        <button onclick="toggleCalculator()" class="w-14 h-14 bg-slate-800 text-white rounded-full shadow-lg hover:bg-slate-700 flex justify-center items-center text-2xl transition-transform hover:scale-110">
-            <i class="fa-solid fa-calculator"></i>
+        <!-- Entry state: type new key (empty after save) -->
+        <div id="keyEntryBox">
+            <div class="flex flex-wrap gap-3 items-end">
+                <div class="flex-1 min-w-[240px]">
+                    <label class="block text-xs font-bold text-amber-800 mb-1" data-i18n="apiKeyLabel">مفتاح API</label>
+                    <input type="password" id="apiKeyInput" placeholder="AIza..." autocomplete="new-password" spellcheck="false"
+                        class="w-full p-3 rounded-xl border border-amber-300 bg-white font-mono text-sm"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();saveApiSettings();}">
+                </div>
+                <div class="w-48">
+                    <label class="block text-xs font-bold text-amber-800 mb-1" data-i18n="modelLabel">النموذج المجاني</label>
+                    <select id="modelSelect" class="w-full p-3 rounded-xl border border-amber-300 bg-white text-sm">
+                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                        <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
+                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                    </select>
+                </div>
+                <button type="button" onclick="saveApiSettings()" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-bold" data-i18n="saveKey">حفظ وإخفاء</button>
+                <button type="button" id="cancelChangeBtn" onclick="cancelChangeKey()" class="hidden bg-slate-200 text-slate-800 px-4 py-3 rounded-xl text-sm font-bold" data-i18n="cancel">إلغاء</button>
+            </div>
+            <p id="apiKeyMissing" class="text-xs mt-2 text-red-600 font-bold hidden" data-i18n="keyMissing">لا يوجد مفتاح محفوظ</p>
+        </div>
+    </div>
+
+    <!-- Main Controls -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center no-print">
+        <button onclick="addManualRow()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700" data-i18n="addManual">إضافة سجل يدوي</button>
+        <button id="voiceBtn" onclick="startVoiceInput()" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-purple-700">
+            <i class="fa-solid fa-microphone ml-2"></i><span data-i18n="voiceInput">إدخال صوتي (Gemini)</span>
         </button>
-
-        <!-- Calculator Panel -->
-        <div id="calculator-panel" class="hidden absolute bottom-16 left-0 bg-white border border-slate-200 rounded-lg shadow-2xl p-4 w-64 mb-2 origin-bottom-left transition-all">
-            <div class="flex justify-between items-center mb-2 border-b pb-2">
-                <span class="font-bold text-sm">الآلة الحاسبة</span>
-                <button onclick="toggleCalculator()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <input type="text" id="calc-display" readonly class="w-full bg-slate-100 text-left text-xl font-mono p-2 rounded mb-3 border-none outline-none" dir="ltr" value="0">
-            
-            <div class="grid grid-cols-4 gap-2 text-center text-lg" dir="ltr">
-                <button onclick="calcPress('C')" class="calc-btn clear col-span-2">C</button>
-                <button onclick="calcPress('(')" class="calc-btn op">(</button>
-                <button onclick="calcPress(')')" class="calc-btn op">)</button>
-                
-                <button onclick="calcPress('7')" class="calc-btn">7</button>
-                <button onclick="calcPress('8')" class="calc-btn">8</button>
-                <button onclick="calcPress('9')" class="calc-btn">9</button>
-                <button onclick="calcPress('/')" class="calc-btn op">÷</button>
-                
-                <button onclick="calcPress('4')" class="calc-btn">4</button>
-                <button onclick="calcPress('5')" class="calc-btn">5</button>
-                <button onclick="calcPress('6')" class="calc-btn">6</button>
-                <button onclick="calcPress('*')" class="calc-btn op">×</button>
-                
-                <button onclick="calcPress('1')" class="calc-btn">1</button>
-                <button onclick="calcPress('2')" class="calc-btn">2</button>
-                <button onclick="calcPress('3')" class="calc-btn">3</button>
-                <button onclick="calcPress('-')" class="calc-btn op">−</button>
-                
-                <button onclick="calcPress('0')" class="calc-btn col-span-2">0</button>
-                <button onclick="calcPress('.')" class="calc-btn">.</button>
-                <button onclick="calcPress('+')" class="calc-btn op">+</button>
-                
-                <button onclick="calcCalculate()" class="calc-btn bg-blue-600 text-white hover:bg-blue-700 col-span-4 mt-1">=</button>
-            </div>
-        </div>
+        <select id="sortOrder" onchange="renderSchedule()" class="p-3 rounded-xl border border-slate-300">
+            <option value="asc" data-i18n="sortAsc">الاسم (أ-ي)</option>
+            <option value="desc" data-i18n="sortDesc">الاسم (ي-أ)</option>
+        </select>
+        <input type="file" id="fileInput" class="hidden" accept=".csv,text/csv" onchange="importCSV(this)">
+        <button onclick="document.getElementById('fileInput').click()" class="bg-slate-600 text-white px-6 py-3 rounded-xl" data-i18n="importCsv">استيراد CSV</button>
+        <span id="voiceStatus" class="text-sm text-purple-700 font-medium"></span>
     </div>
 
-    <!-- Patient Details Modal -->
-    <div id="patient-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 no-print">
-        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-            
-            <div class="flex justify-between items-center p-4 border-b bg-slate-50 rounded-t-lg">
-                <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-id-card text-blue-600 ml-2"></i>بطاقة / سجل المريض</h3>
-                <button onclick="closeModal('patient-modal')" class="text-slate-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <div class="p-6 overflow-y-auto flex-1">
-                <input type="hidden" id="modal-patient-id">
-                
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">اسم المريض</label>
-                        <input type="text" id="modal-patient-name" onchange="updatePatientFromModal()">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">رقم الهاتف</label>
-                        <input type="text" id="modal-patient-phone" onchange="updatePatientFromModal()">
-                    </div>
-                </div>
-
-                <!-- Financial Summary -->
-                <div class="grid grid-cols-3 gap-4 mb-6 text-center">
-                    <div class="bg-slate-50 border border-slate-200 p-3 rounded shadow-sm">
-                        <p class="text-xs text-slate-500 font-bold">إجمالي المستحقات</p>
-                        <p class="text-xl font-bold text-red-600 mt-1" id="modal-total-dues">0</p>
-                    </div>
-                    <div class="bg-slate-50 border border-slate-200 p-3 rounded shadow-sm">
-                        <p class="text-xs text-slate-500 font-bold">إجمالي المدفوعات</p>
-                        <p class="text-xl font-bold text-green-600 mt-1" id="modal-total-paid">0</p>
-                    </div>
-                    <div class="bg-slate-800 border border-slate-800 p-3 rounded shadow-sm text-white">
-                        <p class="text-xs text-slate-300 font-bold">المحصلة (المتبقي)</p>
-                        <p class="text-xl font-bold mt-1" id="modal-balance">0</p>
-                    </div>
-                </div>
-
-                <h4 class="font-bold text-sm mb-2 text-slate-700 border-b pb-1">تاريخ الجلسات والمواعيد:</h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-right text-sm border-collapse">
-                        <thead class="bg-slate-100 text-slate-600">
-                            <tr>
-                                <th class="p-2 border-b">التاريخ</th>
-                                <th class="p-2 border-b">الإجراء الطـبي</th>
-                                <th class="p-2 border-b">المستحقات</th>
-                                <th class="p-2 border-b">المدفوعات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modal-record-tbody" class="divide-y divide-slate-100">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="p-4 border-t bg-slate-50 rounded-b-lg flex gap-3 justify-end">
-                <button onclick="printPatientCard()" class="btn btn-outline text-slate-700 bg-white border-slate-300">
-                    <i class="fa-solid fa-print ml-1"></i> طباعة البطاقة
-                </button>
-                <button onclick="closeModal('patient-modal')" class="btn btn-primary">إغلاق</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Import Data Modal -->
-    <div id="import-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 no-print">
-        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full flex flex-col">
-            <div class="flex justify-between items-center p-4 border-b bg-slate-50 rounded-t-lg">
-                <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-file-import text-blue-600 ml-2"></i>استيراد بيانات للموعد</h3>
-                <button onclick="closeModal('import-modal')" class="text-slate-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <div class="p-6">
-                <p class="text-sm text-slate-600 mb-3">انسخ البيانات من Excel أو أي جدول والصقها هنا. يرجى ترتيب الأعمدة كالتالي:<br>
-                <span class="font-mono text-xs bg-slate-100 p-1 rounded font-bold">اسم المريض | الهاتف | الوقت | الإجراء | المستحقات | المدفوعات</span>
-                </p>
-                <textarea id="import-textarea" rows="6" class="w-full font-mono text-sm" placeholder="الصق البيانات هنا..."></textarea>
-            </div>
-
-            <div class="p-4 border-t bg-slate-50 rounded-b-lg flex gap-3 justify-end">
-                <button onclick="closeModal('import-modal')" class="btn btn-outline">إلغاء</button>
-                <button onclick="processImport()" class="btn btn-primary">استيراد وحفظ</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Message Box Overlay -->
-    <div id="msg-box" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-[60] no-print">
-        <div class="bg-white p-6 rounded shadow-lg max-w-sm w-full text-center">
-            <p id="msg-text" class="text-slate-800 mb-4 font-bold"></p>
-            <button onclick="document.getElementById('msg-box').classList.replace('flex','hidden')" class="btn btn-primary w-full">حسناً</button>
-        </div>
-    </div>
-
-    <!-- Print Area -->
-    <div id="print-area" class="hidden">
-        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-            <h1 style="font-size: 24px; margin:0;">عيادة طب الأسنان الذكية</h1>
-            <p style="font-size: 14px; color: #555; margin:5px 0 0 0;">بطاقة المريض الطبية والمالية</p>
-        </div>
-        
-        <table style="width: 100%; margin-bottom: 20px;">
-            <tr>
-                <td style="font-weight: bold; width: 100px;">رقم الملف:</td>
-                <td id="print-id"></td>
-                <td style="font-weight: bold; width: 100px;">اسم المريض:</td>
-                <td id="print-name"></td>
-            </tr>
-            <tr>
-                <td style="font-weight: bold;">رقم الهاتف:</td>
-                <td id="print-phone"></td>
-                <td style="font-weight: bold;">تاريخ الطباعة:</td>
-                <td id="print-date"></td>
-            </tr>
-        </table>
-
-        <table style="width: 100%; border-collapse: collapse; text-align: right; margin-bottom: 20px;" border="1">
-            <thead>
-                <tr style="background-color: #f0f0f0;">
-                    <th style="padding: 8px;">التاريخ</th>
-                    <th style="padding: 8px;">الإجراء الطبي</th>
-                    <th style="padding: 8px;">المستحقات</th>
-                    <th style="padding: 8px;">المدفوعات</th>
+    <!-- Table -->
+    <div class="bg-white p-2 rounded-2xl shadow-lg border border-slate-200 overflow-x-auto mb-8 no-print">
+        <table class="w-full text-right border-collapse">
+            <thead class="bg-slate-100 text-slate-700 text-sm">
+                <tr>
+                    <th class="p-3" data-i18n="colId">الرقم</th>
+                    <th class="p-3" data-i18n="colName">اسم المريض</th>
+                    <th class="p-3" data-i18n="colPhone">الهاتف</th>
+                    <th class="p-3" data-i18n="colDate">التاريخ والوقت</th>
+                    <th class="p-3" data-i18n="colProc">الإجراء</th>
+                    <th class="p-3" data-i18n="colTeeth">الأسنان</th>
+                    <th class="p-3" data-i18n="colDue">المستحقات</th>
+                    <th class="p-3" data-i18n="colPaid">المدفوعات</th>
+                    <th class="p-3" data-i18n="colActions">إجراءات</th>
                 </tr>
             </thead>
-            <tbody id="print-tbody"></tbody>
+            <tbody id="schedule-tbody"></tbody>
         </table>
-
-        <div style="float: left; width: 300px; border: 1px solid #000; padding: 10px; border-radius: 5px;">
-            <p style="margin:0 0 5px 0;"><strong>إجمالي المستحقات:</strong> <span id="print-dues">0</span></p>
-            <p style="margin:0 0 5px 0;"><strong>إجمالي المدفوعات:</strong> <span id="print-paid">0</span></p>
-            <hr style="margin: 5px 0;">
-            <p style="margin:0; font-size: 18px;"><strong>المتبقي (الرصيد):</strong> <span id="print-balance">0</span></p>
-        </div>
-        <div style="clear: both;"></div>
     </div>
 
+    <!-- Floating Calculator -->
+    <div class="fixed bottom-10 left-10 z-40 no-print">
+        <button onclick="document.getElementById('calc').classList.toggle('hidden')" class="bg-blue-600 text-white w-16 h-16 md:w-20 md:h-20 rounded-full shadow-2xl flex items-center justify-center text-3xl md:text-4xl hover:bg-blue-700">
+            <i class="fa-solid fa-calculator"></i>
+        </button>
+        <div id="calc" class="hidden absolute bottom-24 left-0 bg-slate-900 p-4 rounded-3xl w-72 shadow-2xl border-4 border-blue-500">
+            <input type="text" id="display" class="w-full p-4 mb-4 rounded-xl bg-slate-800 text-white text-left font-mono text-xl" readonly value="0">
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="cl()" class="bg-red-500 text-white p-3 rounded-lg calc-btn">C</button>
+                <button onclick="add('/')" class="bg-slate-600 text-white p-3 rounded-lg calc-btn">/</button>
+                <button onclick="add('*')" class="bg-slate-600 text-white p-3 rounded-lg calc-btn">×</button>
+                <button onclick="add('-')" class="bg-slate-600 text-white p-3 rounded-lg calc-btn">−</button>
+                <button onclick="add('7')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">7</button>
+                <button onclick="add('8')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">8</button>
+                <button onclick="add('9')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">9</button>
+                <button onclick="add('+')" class="bg-slate-600 text-white p-3 rounded-lg calc-btn">+</button>
+                <button onclick="add('4')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">4</button>
+                <button onclick="add('5')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">5</button>
+                <button onclick="add('6')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">6</button>
+                <button onclick="calc()" class="bg-green-600 text-white p-3 rounded-lg row-span-2 calc-btn">=</button>
+                <button onclick="add('1')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">1</button>
+                <button onclick="add('2')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">2</button>
+                <button onclick="add('3')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">3</button>
+                <button onclick="add('0')" class="bg-slate-700 col-span-2 text-white p-3 rounded-lg calc-btn">0</button>
+                <button onclick="add('.')" class="bg-slate-700 text-white p-3 rounded-lg calc-btn">.</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4 no-print">
+        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div id="printArea">
+                <h2 class="text-2xl font-bold mb-4" id="modalTitle" data-i18n="patientRecord">سجل المريض</h2>
+                <div id="patientDetails" class="space-y-2"></div>
+                <div id="patientVisits" class="mt-4 space-y-4"></div>
+                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                    <h4 class="font-bold text-yellow-800" data-i18n="aftercare">تعليمات ما بعد العلاج:</h4>
+                    <p id="adviceProcLabel" class="text-xs text-yellow-700 font-semibold mt-1"></p>
+                    <p id="medicalAdvice" class="text-sm mt-2 whitespace-pre-line leading-relaxed"></p>
+                </div>
+            </div>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <button onclick="printPatientCard()" class="flex-1 min-w-[120px] bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl font-bold">
+                    <i class="fa-solid fa-print ml-2"></i><span data-i18n="print">طباعة</span>
+                </button>
+                <button onclick="closeModal()" class="flex-1 min-w-[120px] bg-slate-800 text-white p-3 rounded-xl" data-i18n="close">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teeth Picker Modal -->
+    <div id="teethModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[60] p-4 no-print">
+        <div class="bg-white p-6 rounded-3xl w-full max-w-xl shadow-2xl max-h-[92vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-1" data-i18n="selectTeeth">اختر الأسنان المصابة</h3>
+            <p class="text-sm text-slate-500 mb-3" data-i18n="teethHint">انقر على السن لتلوينه بالأحمر (مصاب). انقر مرة أخرى لإلغاء التحديد. ترقيم FDI.</p>
+            <div class="flex gap-4 text-xs mb-3 justify-center">
+                <span><span class="legend-dot" style="background:linear-gradient(#fff,#e2e8f0);border:1px solid #94a3b8"></span> <span data-i18n="healthy">سليم</span></span>
+                <span><span class="legend-dot" style="background:linear-gradient(#fca5a5,#b91c1c)"></span> <span data-i18n="affected">مصاب</span></span>
+            </div>
+            <div id="teethPicker" class="mb-4"></div>
+            <p class="text-sm text-center mb-4">
+                <span data-i18n="selected">المحدد:</span>
+                <strong id="selectedTeethLabel" class="text-red-600">—</strong>
+            </p>
+            <div class="flex gap-3">
+                <button onclick="saveTeethSelection()" class="flex-1 bg-indigo-600 text-white p-3 rounded-xl font-bold" data-i18n="save">حفظ</button>
+                <button onclick="closeTeethModal()" class="flex-1 bg-slate-300 text-slate-800 p-3 rounded-xl" data-i18n="cancel">إلغاء</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // --- Data Architecture ---
-        let db = {
-            patients: {}, 
-            appointments: [] 
-        };
+    /* ═══════════════════════════════════════════════════════════════════
+       Gemini free API — each user enters their own key in the UI.
+       Key is stored ONLY in that browser's localStorage (never in this file).
+       Safe to share dental.html / GitHub link: your key is NOT in the code.
+       Get a free key: https://aistudio.google.com/apikey
+       ═══════════════════════════════════════════════════════════════════ */
+    const GEMINI_MODEL_DEFAULT = 'gemini-2.0-flash';
+    const KEY_STORAGE = 'gemini_api_key';
 
-        window.onload = () => {
-            loadDB();
-            document.getElementById('form-date').value = getToday();
-            document.getElementById('filter-date').value = getToday();
-            renderSchedule();
-        };
-
-        function showMsg(text) {
-            document.getElementById('msg-text').innerText = text;
-            const box = document.getElementById('msg-box');
-            box.classList.remove('hidden');
-            box.classList.add('flex');
+    function getApiKey() {
+        try {
+            const stored = localStorage.getItem(KEY_STORAGE);
+            return (stored && stored.trim()) ? stored.trim() : '';
+        } catch (e) {
+            return '';
         }
+    }
+    function getModel() {
+        return localStorage.getItem('gemini_model') || GEMINI_MODEL_DEFAULT;
+    }
+    /** Last 4 chars only — never show full key in the UI */
+    function keyFingerprint(key) {
+        if (!key || key.length < 4) return '••••';
+        return '••••' + key.slice(-4);
+    }
 
-        function loadDB() {
-            try {
-                const stored = localStorage.getItem('clinic_db_v3');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (parsed && typeof parsed === 'object') {
-                        // التحقق من صحة بنية البيانات لتجنب أخطاء المصفوفات
-                        db.patients = parsed.patients || {};
-                        db.appointments = Array.isArray(parsed.appointments) ? parsed.appointments : [];
-                    }
-                }
-            } catch (e) {
-                console.error("Storage Error:", e);
-                db = { patients: {}, appointments: [] };
+    // ── i18n ──────────────────────────────────────────────────────────
+    const i18n = {
+        ar: {
+            appTitle: 'عيادة الأسنان الذكية',
+            exportExcel: 'تصدير Excel',
+            addManual: 'إضافة سجل يدوي',
+            voiceInput: 'إدخال صوتي (Gemini)',
+            sortAsc: 'الاسم (أ-ي)',
+            sortDesc: 'الاسم (ي-أ)',
+            importCsv: 'استيراد CSV',
+            colId: 'الرقم', colName: 'اسم المريض', colPhone: 'الهاتف',
+            colDate: 'التاريخ والوقت', colProc: 'الإجراء', colTeeth: 'الأسنان',
+            colDue: 'المستحقات', colPaid: 'المدفوعات', colActions: 'إجراءات',
+            patientRecord: 'سجل المريض', aftercare: 'تعليمات ما بعد العلاج:',
+            print: 'طباعة', close: 'إغلاق',
+            selectTeeth: 'اختر الأسنان المصابة',
+            teethHint: 'انقر على السن لتلوينه بالأحمر (مصاب). انقر مرة أخرى لإلغاء التحديد. ترقيم FDI العالمي.',
+            selected: 'المحدد:', save: 'حفظ', cancel: 'إلغاء',
+            name: 'الاسم', visits: 'عدد الزيارات', totalDue: 'إجمالي المستحقات',
+            totalPaid: 'إجمالي المدفوعات', balance: 'الرصيد المتبقي',
+            visit: 'زيارة', procedure: 'الإجراء', date: 'التاريخ',
+            due: 'المستحق', paid: 'المدفوع', teeth: 'الأسنان',
+            upper: 'الفك العلوي', lower: 'الفك السفلي', none: 'لا يوجد',
+            healthy: 'سليم', affected: 'مصاب',
+            promptName: 'اسم المريض:', promptPhone: 'رقم الهاتف (اختياري):',
+            promptProc: 'الإجراء (خلع / حشو / تنظيف / فحص):',
+            promptDue: 'المستحقات:', promptPaid: 'المدفوعات:',
+            confirmDelete: 'حذف هذا السجل؟',
+            voiceUnsupported: 'الإدخال الصوتي غير مدعوم. استخدم Chrome.',
+            voiceListening: '🎤 جاري الاستماع... تكلم بيانات المريض',
+            voiceParsing: '⏳ Gemini يحلّل البيانات...',
+            voiceError: 'تعذر التعرف على الصوت',
+            voiceDone: 'تم حفظ الإدخال الصوتي',
+            noApiKey: 'أدخل مفتاح Gemini API أولاً (زر مفتاح Gemini أعلى الصفحة)',
+            apiError: 'خطأ من Gemini API — تحقق من المفتاح والنموذج',
+            exportDone: 'تم التصدير', importDone: 'تم الاستيراد', importError: 'خطأ في قراءة الملف',
+            keySaved: 'تم الحفظ ✓ المفتاح مخفي الآن ولا يظهر للآخرين',
+            keyMissing: 'لا يوجد مفتاح محفوظ — أدخل مفتاحك المجاني أدناه',
+            keyPresent: 'محفوظ في هذا المتصفح فقط · النموذج: ',
+            keyCleared: 'تم مسح المفتاح من هذا المتصفح',
+            clearKey: 'مسح المفتاح',
+            changeKey: 'تغيير المفتاح',
+            keyLockedTitle: '✓ المفتاح محفوظ ومخفي',
+            keyHiddenNote: 'لأمانك لا يمكن عرض المفتاح مرة أخرى. لاستبداله أدخل مفتاحاً جديداً أو امسحه.',
+            shareHint: 'عند مشاركة الرابط على GitHub: كل مستخدم يُدخل مفتاحه المجاني مرة واحدة. المفتاح يُحفظ فقط في متصفّحه ولا يُرفع مع الملف.',
+            step1: 'افتح',
+            step2: 'أنشئ مفتاح API مجاني (Create API key)',
+            step3: 'الصق المفتاح واضغط حفظ — سيُخفى فوراً ولن يظهر للآخرين',
+            apiSettings: 'مفتاح Gemini',
+            geminiTitle: 'مفتاح Gemini API (مجاني)',
+            apiKeyLabel: 'مفتاح API (لن يُعرض بعد الحفظ)',
+            modelLabel: 'النموذج المجاني',
+            saveKey: 'حفظ وإخفاء',
+            adviceLoading: 'جاري إعداد تعليمات مخصصة للإجراء...',
+            adviceFor: 'تعليمات مخصصة لإجراء:',
+            procExtract: 'خلع', procFill: 'حشو', procClean: 'تنظيف', procExam: 'فحص'
+        },
+        en: {
+            appTitle: 'Smart Dental Clinic',
+            exportExcel: 'Export Excel',
+            addManual: 'Add Manual Record',
+            voiceInput: 'Voice Input (Gemini)',
+            sortAsc: 'Name (A-Z)', sortDesc: 'Name (Z-A)',
+            importCsv: 'Import CSV',
+            colId: 'ID', colName: 'Patient Name', colPhone: 'Phone',
+            colDate: 'Date & Time', colProc: 'Procedure', colTeeth: 'Teeth',
+            colDue: 'Due', colPaid: 'Paid', colActions: 'Actions',
+            patientRecord: 'Patient Record', aftercare: 'Post-treatment instructions:',
+            print: 'Print', close: 'Close',
+            selectTeeth: 'Select affected teeth',
+            teethHint: 'Click a tooth to mark it red (affected). Click again to deselect. FDI numbering.',
+            selected: 'Selected:', save: 'Save', cancel: 'Cancel',
+            name: 'Name', visits: 'Visits', totalDue: 'Total Due',
+            totalPaid: 'Total Paid', balance: 'Balance',
+            visit: 'Visit', procedure: 'Procedure', date: 'Date',
+            due: 'Due', paid: 'Paid', teeth: 'Teeth',
+            upper: 'Upper jaw', lower: 'Lower jaw', none: 'None',
+            healthy: 'Healthy', affected: 'Affected',
+            promptName: 'Patient name:', promptPhone: 'Phone (optional):',
+            promptProc: 'Procedure (extraction / filling / cleaning / exam):',
+            promptDue: 'Amount due:', promptPaid: 'Amount paid:',
+            confirmDelete: 'Delete this record?',
+            voiceUnsupported: 'Voice input not supported. Use Chrome.',
+            voiceListening: '🎤 Listening... speak patient details',
+            voiceParsing: '⏳ Gemini is parsing the data...',
+            voiceError: 'Could not recognize speech',
+            voiceDone: 'Voice input saved',
+            noApiKey: 'Enter your Gemini API key first (Gemini Key button in the header)',
+            apiError: 'Gemini API error — check key and model',
+            exportDone: 'Export complete', importDone: 'Import complete', importError: 'Error reading file',
+            keySaved: 'Saved ✓ Key is now hidden and not shown to others',
+            keyMissing: 'No key saved — paste your free key below',
+            keyPresent: 'Saved in this browser only · model: ',
+            keyCleared: 'Key removed from this browser',
+            clearKey: 'Clear key',
+            changeKey: 'Change key',
+            keyLockedTitle: '✓ Key saved and hidden',
+            keyHiddenNote: 'For safety the full key is never shown again. To replace it, enter a new key or clear it.',
+            shareHint: 'Sharing on GitHub: each user pastes their own free key once. It stays only in their browser and is never in the file.',
+            step1: 'Open',
+            step2: 'Create a free API key',
+            step3: 'Paste the key and click Save — it is hidden immediately',
+            apiSettings: 'Gemini Key',
+            geminiTitle: 'Gemini API Key (Free)',
+            apiKeyLabel: 'API key (hidden after save)',
+            modelLabel: 'Free model',
+            saveKey: 'Save & hide',
+            adviceLoading: 'Preparing procedure-specific aftercare...',
+            adviceFor: 'Tailored advice for:',
+            procExtract: 'Extraction', procFill: 'Filling', procClean: 'Cleaning', procExam: 'Exam'
+        }
+    };
+
+    let lang = localStorage.getItem('clinic_lang') || 'ar';
+    let patients = [];
+    try { patients = JSON.parse(localStorage.getItem('clinic_data')) || []; } catch (e) { patients = []; }
+    patients = patients.map((p, i) => ({
+        uid: p.uid || ('u' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 7)),
+        id: p.id != null ? p.id : i + 1,
+        name: p.name || '', phone: p.phone || '', date: p.date || '',
+        proc: p.proc || '', due: p.due != null ? p.due : 0, paid: p.paid != null ? p.paid : 0,
+        teeth: Array.isArray(p.teeth) ? p.teeth : []
+    }));
+    persist();
+
+    // FDI adult: UR 18-11, UL 21-28, LL 31-38, LR 48-41
+    const UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+    const LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+
+    let teethEditUid = null;
+    let teethEditSet = new Set();
+    let calcExpr = '';
+
+    function t(key) {
+        return (i18n[lang] && i18n[lang][key]) || i18n.ar[key] || key;
+    }
+
+    function persist() {
+        localStorage.setItem('clinic_data', JSON.stringify(patients));
+    }
+
+    function findIndexByUid(uid) {
+        return patients.findIndex(p => p.uid === uid);
+    }
+
+    // ── API settings: key hidden after save (safe for GitHub sharing) ─
+    let changingKey = false;
+
+    function updateKeyHeaderButton() {
+        const btn = document.querySelector('button[onclick="toggleApiPanel()"]');
+        if (!btn) return;
+        const has = !!getApiKey();
+        btn.className = has
+            ? 'bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold'
+            : 'bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold';
+        const label = btn.querySelector('[data-i18n="apiSettings"]');
+        // keep icon + label
+    }
+
+    function refreshApiStatus() {
+        const key = getApiKey();
+        const modelEl = document.getElementById('modelSelect');
+        if (modelEl) modelEl.value = getModel();
+
+        const locked = document.getElementById('keyLockedBox');
+        const entry = document.getElementById('keyEntryBox');
+        const missing = document.getElementById('apiKeyMissing');
+        const status = document.getElementById('apiStatus');
+        const cancelBtn = document.getElementById('cancelChangeBtn');
+        const input = document.getElementById('apiKeyInput');
+
+        // Never put the stored key into the input
+        if (input && !changingKey) input.value = '';
+
+        if (key && !changingKey) {
+            locked.classList.remove('hidden');
+            entry.classList.add('hidden');
+            if (status) status.textContent = t('keyPresent') + getModel() + ' · ' + keyFingerprint(key);
+            if (missing) missing.classList.add('hidden');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+        } else {
+            locked.classList.add('hidden');
+            entry.classList.remove('hidden');
+            if (missing) {
+                missing.classList.toggle('hidden', !!key && changingKey);
+                missing.textContent = t('keyMissing');
+            }
+            if (cancelBtn) cancelBtn.classList.toggle('hidden', !(changingKey && key));
+            if (input) {
+                input.value = '';
+                input.type = 'password';
+                input.placeholder = 'AIza...';
             }
         }
-        
-        function saveDB() {
-            try {
-                localStorage.setItem('clinic_db_v3', JSON.stringify(db));
-            } catch (e) {
-                console.error("Storage Error:", e);
-                showMsg("تنبيه: لا يمكن حفظ البيانات. قد يكون متصفحك في وضع التصفح المتخفي.");
+        updateKeyHeaderButton();
+    }
+
+    function toggleApiPanel() {
+        const panel = document.getElementById('apiPanel');
+        panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            changingKey = false;
+            refreshApiStatus();
+        }
+    }
+
+    function startChangeKey() {
+        changingKey = true;
+        refreshApiStatus();
+        const input = document.getElementById('apiKeyInput');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+    }
+
+    function cancelChangeKey() {
+        changingKey = false;
+        const input = document.getElementById('apiKeyInput');
+        if (input) input.value = '';
+        refreshApiStatus();
+    }
+
+    function saveApiSettings() {
+        const input = document.getElementById('apiKeyInput');
+        const key = (input.value || '').trim();
+        const model = document.getElementById('modelSelect').value;
+        localStorage.setItem('gemini_model', model);
+
+        if (!key) {
+            alert(t('keyMissing'));
+            return;
+        }
+        // Basic sanity check
+        if (key.length < 20) {
+            alert(lang === 'ar' ? 'المفتاح قصير جداً — تأكد من نسخه كاملاً' : 'Key looks too short — paste the full key');
+            return;
+        }
+
+        localStorage.setItem(KEY_STORAGE, key);
+        // Wipe the field immediately so nobody can read it from the screen
+        input.value = '';
+        input.type = 'password';
+        changingKey = false;
+        refreshApiStatus();
+        alert(t('keySaved'));
+    }
+
+    function clearApiKey() {
+        if (!confirm(lang === 'ar' ? 'مسح المفتاح من هذا المتصفح؟' : 'Remove the key from this browser?')) return;
+        localStorage.removeItem(KEY_STORAGE);
+        changingKey = false;
+        const input = document.getElementById('apiKeyInput');
+        if (input) input.value = '';
+        refreshApiStatus();
+        alert(t('keyCleared'));
+    }
+
+    // ── Language ──────────────────────────────────────────────────────
+    function setLang(l) {
+        lang = l;
+        localStorage.setItem('clinic_lang', lang);
+        document.documentElement.lang = lang === 'ar' ? 'ar' : 'en';
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18n[lang][key]) el.textContent = i18n[lang][key];
+        });
+        const sort = document.getElementById('sortOrder');
+        if (sort) {
+            sort.options[0].text = t('sortAsc');
+            sort.options[1].text = t('sortDesc');
+        }
+        document.getElementById('langAr').className =
+            'px-3 py-2 text-sm font-bold ' + (lang === 'ar' ? 'bg-blue-600' : 'bg-slate-700');
+        document.getElementById('langEn').className =
+            'px-3 py-2 text-sm font-bold ' + (lang === 'en' ? 'bg-blue-600' : 'bg-slate-700');
+        document.title = t('appTitle');
+        // Re-apply locked-box labels that use data-i18n
+        document.querySelectorAll('#apiPanel [data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18n[lang][key]) el.textContent = i18n[lang][key];
+        });
+        refreshApiStatus();
+        renderSchedule();
+    }
+
+    // ── Realistic tooth SVG paths (viewBox 0 0 40 56) ─────────────────
+    // type by FDI position: molar / premolar / canine / incisor
+    function toothType(n) {
+        const pos = n % 10; // 1-8
+        if (pos >= 6) return 'molar';
+        if (pos >= 4) return 'premolar';
+        if (pos === 3) return 'canine';
+        return 'incisor';
+    }
+
+    /** Crown-focused realistic silhouettes (anatomic look) */
+    function toothSvgPaths(type, isUpper) {
+        // Paths designed for viewBox="0 0 40 56"
+        // Crown occupies top half for upper (crown down toward midline in real mouth —
+        // we draw crown toward the bite: upper teeth crown at bottom of cell, lower crown at top)
+        if (type === 'molar') {
+            // Broad crown with multi-cusp top + two roots suggestion
+            if (isUpper) {
+                return {
+                    root: 'M12 4 C11 10,10 16,12 22 L28 22 C30 16,29 10,28 4 C24 6,16 6,12 4 Z',
+                    enamel: 'M8 22 C6 24,5 28,6 34 C7 42,10 48,14 50 C18 52,22 52,26 50 C30 48,33 42,34 34 C35 28,34 24,32 22 Z',
+                    highlight: 'M12 28 C14 26,20 26,24 28 C22 30,16 30,12 28 Z',
+                    cusps: 'M10 24 Q14 20 18 24 M18 24 Q22 19 26 24 M26 24 Q30 21 32 25'
+                };
             }
-        }
-
-        function getToday() {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        }
-
-        // --- Modals Management ---
-        function openModal(id) {
-            const m = document.getElementById(id);
-            m.classList.remove('hidden');
-            m.classList.add('flex');
-        }
-        function closeModal(id) {
-            const m = document.getElementById(id);
-            m.classList.add('hidden');
-            m.classList.remove('flex');
-        }
-
-        // دالة لمنع أخطاء علامات التنصيص التي تكسر الجدول
-        function escapeHTML(str) {
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-
-
-        // --- Schedule Rendering & Inline Editing ---
-        function renderSchedule() {
-            const filterDate = document.getElementById('filter-date').value;
-            const showAll = document.getElementById('show-all-dates').checked;
-            const sortOrder = document.getElementById('sort-order').value;
-            const tbody = document.getElementById('schedule-tbody');
-            
-            while (tbody.firstChild) {
-                tbody.removeChild(tbody.firstChild);
-            }
-            
-            let filtered = showAll ? [...db.appointments] : db.appointments.filter(a => a.date === filterDate);
-            
-            // Sorting logic remains unchanged
-            if (sortOrder === 'asc') {
-                filtered.sort((a,b) => {
-                    let nameA = db.patients[a.patientId]?.name || '';
-                    let nameB = db.patients[b.patientId]?.name || '';
-                    return nameA.localeCompare(nameB);
-                });
-            } else if (sortOrder === 'desc') {
-                filtered.sort((a,b) => {
-                    let nameA = db.patients[a.patientId]?.name || '';
-                    let nameB = db.patients[b.patientId]?.name || '';
-                    return nameB.localeCompare(nameA);
-                });
-            } else {
-                filtered.sort((a,b) => a.time.localeCompare(b.time));
-            }
-
-            if (filtered.length === 0) {
-                document.getElementById('schedule-empty').classList.remove('hidden');
-            } else {
-                document.getElementById('schedule-empty').classList.add('hidden');
-                
-                const fragment = document.createDocumentFragment();
-                filtered.forEach(app => {
-                    const patient = db.patients[app.patientId];
-                    const pName = patient ? escapeHTML(patient.name) : 'غير معروف';
-                    const safeTime = escapeHTML(app.time || '');
-                    const safeTreatment = escapeHTML(app.treatment || '');
-                    
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 transition-colors";
-                    
-                    tr.innerHTML = `
-                        <td class="p-1 border-b">
-                            <input type="text" value="${safeTime}" class="inline-input" onkeydown="if(event.key==='Enter'){this.blur();}" onblur="updateAppInline(this, '${app.id}', 'time')">
-                        </td>
-                        <td class="p-2 border-b font-bold text-blue-600">${app.patientId}</td>
-                        <td class="p-2 border-b cursor-pointer text-blue-800 hover:underline font-bold" onclick="openPatientDetails('${app.patientId}')">${pName}</td>
-                        <td class="p-1 border-b">
-                            <input type="text" value="${safeTreatment}" class="inline-input" onkeydown="if(event.key==='Enter'){this.blur();}" onblur="updateAppInline(this, '${app.id}', 'treatment')">
-                        </td>
-                        <td class="p-1 border-b">
-                            <input type="number" value="${app.dues || 0}" class="inline-input text-red-600 font-bold" onkeydown="if(event.key==='Enter'){this.blur();}" onblur="updateAppInline(this, '${app.id}', 'dues')">
-                        </td>
-                        <td class="p-1 border-b">
-                            <input type="number" value="${app.payments || 0}" class="inline-input text-green-600 font-bold" onkeydown="if(event.key==='Enter'){this.blur();}" onblur="updateAppInline(this, '${app.id}', 'payments')">
-                        </td>
-                        <td class="p-2 border-b text-center">
-                            <button onclick="deleteAppointment('${app.id}')" class="text-slate-400 hover:text-red-600 transition-colors" title="حذف الموعد"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    `;
-                    fragment.appendChild(tr);
-                });
-                tbody.appendChild(fragment);
-            }
-        }
-
-        // Inline Update Logic
-        function updateAppInline(el, appId, field) {
-            let val = el.value.trim();
-            const app = db.appointments.find(a => a.id === appId);
-            if (app) {
-                if (field === 'dues' || field === 'payments') {
-                    val = parseFloat(val) || 0;
-                    el.value = val; // إعادة كتابة الرقم لتجنب المسافات
-                } else if (val === '') {
-                    val = '-'; // منع ترك الخلية فارغة تماماً
-                    el.value = val;
-                }
-                app[field] = val;
-                saveDB();
-            }
-        }
-
-        function deleteAppointment(appId) {
-            db.appointments = db.appointments.filter(a => a.id !== appId);
-            saveDB();
-            renderSchedule();
-        }
-
-        // --- Appointment Creation ---
-        function fetchPatientData() {
-            const pId = document.getElementById('form-patient-id').value.trim();
-            if (pId && db.patients[pId]) {
-                document.getElementById('form-name').value = db.patients[pId].name;
-                document.getElementById('form-phone').value = db.patients[pId].phone;
-            }
-        }
-
-        function saveAppointment(e) {
-            e.preventDefault();
-            
-            let pId = document.getElementById('form-patient-id').value.trim();
-            const name = document.getElementById('form-name').value.trim();
-            const phone = document.getElementById('form-phone').value.trim();
-            
-            if (!pId) {
-                pId = Math.floor(1000 + Math.random() * 9000).toString();
-                while(db.patients[pId]) pId = Math.floor(1000 + Math.random() * 9000).toString();
-                showMsg(`تم إنشاء ملف جديد للمريض برقم: ${pId}`);
-            }
-
-            db.patients[pId] = { id: pId, name, phone };
-
-            const newApp = {
-                id: 'APP-' + Date.now(),
-                patientId: pId,
-                date: document.getElementById('form-date').value,
-                time: document.getElementById('form-time').value,
-                treatment: document.getElementById('form-treatment').value || 'غير محدد',
-                dues: parseFloat(document.getElementById('form-dues').value) || 0,
-                payments: parseFloat(document.getElementById('form-payments').value) || 0
+            return {
+                root: 'M12 52 C11 46,10 40,12 34 L28 34 C30 40,29 46,28 52 C24 50,16 50,12 52 Z',
+                enamel: 'M8 34 C6 32,5 28,6 22 C7 14,10 8,14 6 C18 4,22 4,26 6 C30 8,33 14,34 22 C35 28,34 32,32 34 Z',
+                highlight: 'M12 16 C14 14,20 14,24 16 C22 18,16 18,12 16 Z',
+                cusps: 'M10 32 Q14 36 18 32 M18 32 Q22 37 26 32 M26 32 Q30 35 32 31'
             };
+        }
+        if (type === 'premolar') {
+            if (isUpper) {
+                return {
+                    root: 'M16 4 C15 12,14 18,16 24 L24 24 C26 18,25 12,24 4 C22 5,18 5,16 4 Z',
+                    enamel: 'M11 24 C9 26,8 30,9 36 C10 44,14 50,20 51 C26 50,30 44,31 36 C32 30,31 26,29 24 Z',
+                    highlight: 'M15 30 C17 28,21 28,23 30 C21 32,17 32,15 30 Z',
+                    cusps: 'M13 26 Q17 22 20 26 M20 26 Q24 22 28 26'
+                };
+            }
+            return {
+                root: 'M16 52 C15 44,14 38,16 32 L24 32 C26 38,25 44,24 52 C22 51,18 51,16 52 Z',
+                enamel: 'M11 32 C9 30,8 26,9 20 C10 12,14 6,20 5 C26 6,30 12,31 20 C32 26,31 30,29 32 Z',
+                highlight: 'M15 14 C17 12,21 12,23 14 C21 16,17 16,15 14 Z',
+                cusps: 'M13 30 Q17 34 20 30 M20 30 Q24 34 28 30'
+            };
+        }
+        if (type === 'canine') {
+            // Pointed cusp
+            if (isUpper) {
+                return {
+                    root: 'M17 2 C16 12,15 18,17 26 L23 26 C25 18,24 12,23 2 C21 3,19 3,17 2 Z',
+                    enamel: 'M12 26 C10 28,10 34,12 40 C14 48,17 52,20 54 C23 52,26 48,28 40 C30 34,30 28,28 26 Z',
+                    highlight: 'M16 32 C18 30,21 30,22 32 C20 34,18 34,16 32 Z',
+                    cusps: 'M14 28 L20 22 L26 28'
+                };
+            }
+            return {
+                root: 'M17 54 C16 44,15 38,17 30 L23 30 C25 38,24 44,23 54 C21 53,19 53,17 54 Z',
+                enamel: 'M12 30 C10 28,10 22,12 16 C14 8,17 4,20 2 C23 4,26 8,28 16 C30 22,30 28,28 30 Z',
+                highlight: 'M16 12 C18 10,21 10,22 12 C20 14,18 14,16 12 Z',
+                cusps: 'M14 28 L20 34 L26 28'
+            };
+        }
+        // incisor — flat cutting edge
+        if (isUpper) {
+            return {
+                root: 'M16 4 C15 12,15 18,17 26 L23 26 C25 18,25 12,24 4 C22 5,18 5,16 4 Z',
+                enamel: 'M11 26 C10 28,10 34,11 42 C12 48,14 52,20 53 C26 52,28 48,29 42 C30 34,30 28,29 26 Z',
+                highlight: 'M14 32 C16 30,22 30,24 32 C22 34,16 34,14 32 Z',
+                cusps: 'M12 28 L28 28'
+            };
+        }
+        return {
+            root: 'M16 52 C15 44,15 38,17 30 L23 30 C25 38,25 44,24 52 C22 51,18 51,16 52 Z',
+            enamel: 'M11 30 C10 28,10 22,11 14 C12 8,14 4,20 3 C26 4,28 8,29 14 C30 22,30 28,29 30 Z',
+            highlight: 'M14 12 C16 10,22 10,24 12 C22 14,16 14,14 12 Z',
+            cusps: 'M12 28 L28 28'
+        };
+    }
 
-            db.appointments.push(newApp);
-            saveDB();
-            
-            document.getElementById('appointment-form').reset();
-            document.getElementById('form-date').value = getToday();
-            
+    function renderToothSvg(num, isUpper, active, sizeClass) {
+        const type = toothType(num);
+        const paths = toothSvgPaths(type, isUpper);
+        const activeCls = active ? ' active' : '';
+        return `
+        <button type="button" class="tooth-btn ${type}${activeCls}" data-num="${num}" title="FDI ${num}" onclick="toggleTooth(${num})">
+            <svg class="tooth-svg" viewBox="0 0 40 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path class="root" d="${paths.root}"/>
+                <path class="enamel" d="${paths.enamel}"/>
+                <path class="highlight" d="${paths.highlight}"/>
+                <path class="outline" d="${paths.enamel}" />
+                <path d="${paths.cusps}" fill="none" stroke="${active ? '#7f1d1d' : '#cbd5e1'}" stroke-width="0.9" stroke-linecap="round"/>
+            </svg>
+            <span class="tooth-num">${num}</span>
+        </button>`;
+    }
+
+    function renderArchHtml(selectedSet, mode) {
+        // mode: 'full' | 'mini'
+        const isFull = mode === 'full';
+        const cls = isFull ? 'dental-arch full' : 'dental-arch mini';
+        const set = selectedSet instanceof Set ? selectedSet : new Set((selectedSet || []).map(Number));
+
+        const upperHtml = UPPER.map(n => renderToothSvg(n, true, set.has(n), mode)).join('');
+        const lowerHtml = LOWER.map(n => renderToothSvg(n, false, set.has(n), mode)).join('');
+
+        // In mini mode, disable click by using a wrapper without handlers — still use buttons but stop if mini
+        // We'll pass data-readonly for mini and handle in toggleTooth
+        return `
+        <div class="${cls}" data-mode="${mode}">
+            ${isFull ? `<div class="arch-label">${t('upper')}</div>` : ''}
+            <div class="arch-row upper">${upperHtml}</div>
+            <div class="midline"></div>
+            <div class="arch-row lower">${lowerHtml}</div>
+            ${isFull ? `<div class="arch-label">${t('lower')}</div>` : ''}
+        </div>`;
+    }
+
+    function renderMiniTeeth(teethArr) {
+        const set = new Set((teethArr || []).map(Number));
+        // mini: re-render without onclick side effects via temporary flag
+        const html = renderArchHtml(set, 'mini');
+        // strip onclick for mini display
+        return html.replace(/onclick="toggleTooth\(\d+\)"/g, 'onclick="return false"').replace(/tooth-btn/g, 'tooth-btn pointer-events-none');
+    }
+
+    function renderFullTeethPicker(containerId, selectedSet) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = renderArchHtml(selectedSet, 'full');
+        updateSelectedLabel();
+    }
+
+    function toggleTooth(num) {
+        if (teethEditUid == null && !document.getElementById('teethModal').classList.contains('hidden') === false) {
+            // only when modal open
+        }
+        if (document.getElementById('teethModal').classList.contains('hidden')) return;
+        if (teethEditSet.has(num)) teethEditSet.delete(num);
+        else teethEditSet.add(num);
+        renderFullTeethPicker('teethPicker', teethEditSet);
+    }
+
+    function updateSelectedLabel() {
+        const el = document.getElementById('selectedTeethLabel');
+        if (!el) return;
+        const arr = [...teethEditSet].sort((a, b) => a - b);
+        el.textContent = arr.length ? arr.join(', ') : '—';
+    }
+
+    function openTeethModal(uid) {
+        const idx = findIndexByUid(uid);
+        if (idx < 0) return;
+        teethEditUid = uid;
+        teethEditSet = new Set((patients[idx].teeth || []).map(Number));
+        document.getElementById('teethModal').classList.remove('hidden');
+        renderFullTeethPicker('teethPicker', teethEditSet);
+    }
+
+    function closeTeethModal() {
+        document.getElementById('teethModal').classList.add('hidden');
+        teethEditUid = null;
+        teethEditSet = new Set();
+    }
+
+    function saveTeethSelection() {
+        const idx = findIndexByUid(teethEditUid);
+        if (idx >= 0) {
+            patients[idx].teeth = [...teethEditSet].sort((a, b) => a - b);
+            persist();
             renderSchedule();
         }
+        closeTeethModal();
+    }
 
-        // --- Patient Details Modal ---
-        function openPatientDetails(pId) {
-            if (!db.patients[pId]) return;
-            const patient = db.patients[pId];
-            
-            // Set Data
-            document.getElementById('modal-patient-id').value = pId;
-            document.getElementById('modal-patient-name').value = patient.name;
-            document.getElementById('modal-patient-phone').value = patient.phone || '';
+    // ── Schedule ──────────────────────────────────────────────────────
+    function escapeHtml(s) {
+        return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escapeAttr(s) {
+        return String(s ?? '').replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    }
 
-            const pApps = db.appointments.filter(a => a.patientId === pId);
-            // Sort dates oldest to newest for record flow
-            pApps.sort((a,b) => a.date.localeCompare(b.date));
+    function renderSchedule() {
+        const tbody = document.getElementById('schedule-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        const order = document.getElementById('sortOrder')?.value || 'asc';
+        const sorted = [...patients].sort((a, b) => {
+            const cmp = (a.name || '').localeCompare(b.name || '', lang === 'ar' ? 'ar' : 'en');
+            return order === 'asc' ? cmp : -cmp;
+        });
 
-            let totalDues = 0; let totalPaid = 0;
-            const tbody = document.getElementById('modal-record-tbody');
-            tbody.innerHTML = '';
+        sorted.forEach((p, index) => {
+            const tr = document.createElement('tr');
+            tr.className = index % 2 === 0 ? 'row-even' : 'row-odd';
+            tr.innerHTML = `
+                <td class="p-3 border text-center">${p.id}</td>
+                <td class="p-3 border font-bold text-blue-700 cursor-pointer hover:underline" onclick="showCard('${escapeAttr(p.name)}')">${escapeHtml(p.name)}</td>
+                <td class="p-3 border"><input type="text" value="${escapeAttr(p.phone || '')}" onchange="updateByUid('${p.uid}', 'phone', this.value)" class="w-full bg-transparent min-w-[100px]"></td>
+                <td class="p-3 border"><input type="text" value="${escapeAttr(p.date || '')}" onchange="updateByUid('${p.uid}', 'date', this.value)" class="w-full bg-transparent min-w-[100px]"></td>
+                <td class="p-3 border"><input type="text" value="${escapeAttr(p.proc || '')}" onchange="updateByUid('${p.uid}', 'proc', this.value)" class="w-full bg-transparent min-w-[80px]"></td>
+                <td class="p-3 border text-center">
+                    <div class="flex flex-col items-center gap-1">
+                        ${renderMiniTeeth(p.teeth)}
+                        <button onclick="openTeethModal('${p.uid}')" class="text-xs text-indigo-600 hover:underline" title="${t('selectTeeth')}">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            ${(p.teeth && p.teeth.length) ? '<span class="text-red-600 font-bold">'+p.teeth.join(',')+'</span>' : ''}
+                        </button>
+                    </div>
+                </td>
+                <td class="p-3 border font-bold text-red-600"><input type="number" value="${p.due || 0}" onchange="updateByUid('${p.uid}', 'due', this.value)" class="w-full bg-transparent min-w-[70px]"></td>
+                <td class="p-3 border font-bold text-green-600"><input type="number" value="${p.paid || 0}" onchange="updateByUid('${p.uid}', 'paid', this.value)" class="w-full bg-transparent min-w-[70px]"></td>
+                <td class="p-3 border text-center whitespace-nowrap">
+                    <button onclick="showCard('${escapeAttr(p.name)}')" class="text-blue-600 mx-1" title="${t('patientRecord')}"><i class="fa-solid fa-id-card"></i></button>
+                    <button onclick="deleteByUid('${p.uid}')" class="text-red-500 mx-1"><i class="fa-solid fa-trash"></i></button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
 
-            pApps.forEach(app => {
-                totalDues += app.dues;
-                totalPaid += app.payments;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-2 border-b">${app.date} <span class="text-xs text-slate-400">(${app.time})</span></td>
-                    <td class="p-2 border-b">${app.treatment}</td>
-                    <td class="p-2 border-b text-red-600">${app.dues}</td>
-                    <td class="p-2 border-b text-green-600">${app.payments}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+    function updateByUid(uid, field, value) {
+        const idx = findIndexByUid(uid);
+        if (idx < 0) return;
+        if (field === 'due' || field === 'paid') patients[idx][field] = parseFloat(value) || 0;
+        else patients[idx][field] = value;
+        persist();
+    }
 
-            document.getElementById('modal-total-dues').innerText = totalDues;
-            document.getElementById('modal-total-paid').innerText = totalPaid;
-            
-            const balance = totalDues - totalPaid;
-            const balEl = document.getElementById('modal-balance');
-            balEl.innerText = balance;
-            if(balance > 0) balEl.className = "text-xl font-bold mt-1 text-red-400"; 
-            else if(balance < 0) balEl.className = "text-xl font-bold mt-1 text-green-400"; 
-            else balEl.className = "text-xl font-bold mt-1 text-white"; 
+    function deleteByUid(uid) {
+        if (!confirm(t('confirmDelete'))) return;
+        patients = patients.filter(p => p.uid !== uid);
+        persist();
+        renderSchedule();
+    }
 
-            openModal('patient-modal');
-        }
+    // ── Patient card ──────────────────────────────────────────────────
+    function showCard(name) {
+        const history = patients.filter(p => p.name === name);
+        if (!history.length) return;
+        const totalDue = history.reduce((s, p) => s + parseFloat(p.due || 0), 0);
+        const totalPaid = history.reduce((s, p) => s + parseFloat(p.paid || 0), 0);
+        const balance = totalDue - totalPaid;
 
-        function updatePatientFromModal() {
-            const pId = document.getElementById('modal-patient-id').value;
-            if(db.patients[pId]) {
-                db.patients[pId].name = document.getElementById('modal-patient-name').value;
-                db.patients[pId].phone = document.getElementById('modal-patient-phone').value;
-                saveDB();
-                renderSchedule(); // update names in background
+        document.getElementById('patientDetails').innerHTML = `
+            <p><strong>${t('name')}:</strong> ${escapeHtml(name)}</p>
+            <p><strong>${t('visits')}:</strong> ${history.length}</p>
+            <p><strong>${t('totalDue')}:</strong> ${totalDue.toFixed(2)}</p>
+            <p><strong>${t('totalPaid')}:</strong> ${totalPaid.toFixed(2)}</p>
+            <p><strong>${t('balance')}:</strong> <span class="${balance > 0 ? 'text-red-600' : 'text-green-600'} font-bold">${balance.toFixed(2)}</span></p>`;
+
+        document.getElementById('patientVisits').innerHTML = history.map((v, i) => `
+            <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                <div class="flex flex-wrap justify-between gap-2 mb-2">
+                    <span class="font-bold text-slate-700">${t('visit')} ${i + 1}</span>
+                    <span class="text-sm text-slate-500">${escapeHtml(v.date || '')}</span>
+                </div>
+                <p class="text-sm"><strong>${t('procedure')}:</strong> ${escapeHtml(v.proc || '')}</p>
+                <p class="text-sm"><strong>${t('due')}:</strong> ${parseFloat(v.due || 0).toFixed(2)}
+                   &nbsp;|&nbsp; <strong>${t('paid')}:</strong> ${parseFloat(v.paid || 0).toFixed(2)}</p>
+                <p class="text-sm mb-2"><strong>${t('teeth')}:</strong> ${(v.teeth && v.teeth.length) ? v.teeth.join(', ') : t('none')}</p>
+                ${renderMiniTeeth(v.teeth)}
+            </div>`).join('');
+
+        const last = history[history.length - 1];
+        const adviceEl = document.getElementById('medicalAdvice');
+        const labelEl = document.getElementById('adviceProcLabel');
+        labelEl.textContent = t('adviceFor') + ' ' + (last.proc || '—');
+        adviceEl.textContent = t('adviceLoading');
+        document.getElementById('modal').classList.remove('hidden');
+        // Async tailored advice (local variants + optional Gemini)
+        fillPatientAdvice(last);
+    }
+
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+    function printPatientCard() { window.print(); }
+
+    /** Map free-text procedure → category key */
+    function classifyProcedure(proc) {
+        const p = (proc || '').toLowerCase().trim();
+        const rules = [
+            { key: 'extraction', re: /خلع|extract|قلع|removal|tooth pull|wisdom|ضرس العقل|قلع/i },
+            { key: 'rootCanal', re: /عصب|root\s*canal|endodont|علاج عصب|سحب عصب|rct/i },
+            { key: 'filling', re: /حشو|fill|compos|amalga|ترميم|restoration|حشوة/i },
+            { key: 'crown', re: /تاج|crown|cap|تلبيس|zircon|بورسلين|porcelain/i },
+            { key: 'bridge', re: /جسر|bridge/i },
+            { key: 'implant', re: /زرع|implant|غرسة/i },
+            { key: 'cleaning', re: /تنظيف|clean|scalin|polish|جير|plaque|prophy/i },
+            { key: 'whitening', re: /تبييض|whiten|bleach|بليتش/i },
+            { key: 'braces', re: /تقويم|brace|ortho|aligner|invisalign|سلك/i },
+            { key: 'gum', re: /لثة|gum|periodont|التهاب لثة|gingiv/i },
+            { key: 'abscess', re: /خراج|abscess|عدوى|infection|صرف/i },
+            { key: 'veneer', re: /قشرة|veneer|لومنير|lumineer/i },
+            { key: 'denture', re: /طقم|denture|جزئي|partial|complete denture/i },
+            { key: 'sealant', re: /واقي|sealant|فلورايد|fluoride/i },
+            { key: 'exam', re: /فحص|exam|check|كشف|استشار|consult/i }
+        ];
+        for (const r of rules) if (r.re.test(p)) return r.key;
+        return 'general';
+    }
+
+    /** Multiple variants per procedure — pick a stable-but-varied one */
+    function adviceLibrary() {
+        const ar = {
+            extraction: [
+                '• لا تمضمض بقوة ولا تستخدم الشفاطة لمدة 24 ساعة.\n• عض على الشاش لمدة 30–45 دقيقة؛ غيّره إذا ابتلّ كثيراً.\n• ضع كمادات باردة على الخد 10 دقائق كل ساعة في اليوم الأول.\n• تجنّب التدخين والمشروبات الساخنة والكحول 48–72 ساعة.\n• تناول طعاماً طرياً بارداً/فاتراً، ولا تُفرّش مكان الخلع اليوم الأول.\n• إن استمر النزيف الغزير أو تورم شديد أو حمى — راجع العيادة فوراً.',
+                '• اترك الجلطة الدموية في مكانها؛ لا تلمس الجرح باللسان أو الإصبع.\n• ارفع رأسك أثناء النوم الليلة الأولى.\n• مسكن حسب وصفة الطبيب (مثل باراسيتامول/إيبوبروفين إن لم يُمنع).\n• مضمضة ملحية خفيفة فقط بعد 24 ساعة (نصف ملعقة ملح في كوب ماء فاتر).\n• لا تمارس رياضة عنيفة 48 ساعة.\n• التورم قد يزيد لليوم الثاني ثم يتحسن — هذا طبيعي غالباً.',
+                '• بعد خلع ضرس العقل: انتفاخ وكدمات ممكنة لعدة أيام.\n• كمادات باردة أول 24 ساعة ثم دافئة خفيفة بعدها إن نصح الطبيب.\n• التزم بالمضاد الحيوي إن وُصف حتى النهاية.\n• تجنّب البذور والمكسرات والأرز غير المطهو جيداً أسبوعاً.\n• إن شعرت بألم حاد ينتشر للأذن بعد 3–4 أيام (ألم الجيب الجاف) اتصل بالعيادة.'
+            ],
+            rootCanal: [
+                '• السن قد يبقى حساساً للمضغ واللمس عدة أيام — تجنّب المضغ عليه.\n• تناول المسكن حسب الوصفة.\n• إن وُضع حشو مؤقت لا تمضغ أشياء لزجة (علكة/توفي) حتى التاج النهائي.\n• نظّف بلطف بالفرشاة؛ تجنّب الخيط بقوة حول السن في أول يومين.\n• ألم يزداد مع تورم أو حمى → راجع العيادة.',
+                '• علاج العصب يزيل الالتهاب الداخلي لكن الالتئام يحتاج أياماً.\n• تجنّب الأطعمة الصلبة على الجانب المعالج حتى يُركَّب التاج إن لزم.\n• أكمل المضاد إن وُصف.\n• حساسية خفيفة للحرارة/البرودة قد تستمر أسبوعاً ثم تتراجع.\n• لا تؤجل جلسة التاج إن طُلبت — السن يصبح أكثر عرضة للكسر.'
+            ],
+            filling: [
+                '• لا تأكل على الجانب المحشو لمدة ساعتين (حتى يكتمل تصلّب الحشو).\n• حساسية خفيفة للبرودة/الحلاوة طبيعية حتى أسبوعين.\n• إن شعرت بارتفاع في العضة (السن يلامس أولاً) راجعنا لتعديل بسيط.\n• تجنّب قضم الثلج والأقلام والمكسرات الصلبة على الحشو الجديد.\n• حافظ على تنظيف ما بين الأسنان بالخيط يومياً.',
+                '• بعد الحشو التجميلي: قد تشعر بخشونة بسيطة تختفي مع الصقل أو التكيّف.\n• انتظر انتهاء التخدير قبل الأكل حتى لا تعض الخد/اللسان.\n• إن استمر الألم النابض ليلاً بعد 3 أيام — أخبر الطبيب (قد يحتاج تقييماً).\n• اغسل فمك بلطف؛ لا تستخدم غسول كحولي قوي أول يوم.'
+            ],
+            crown: [
+                '• إن كان تاجاً مؤقتاً: تجنّب الأطعمة اللزجة والقاسية والمضغ على ذلك الجانب.\n• نظّف بالفرشاة بلطف؛ اسحب الخيط للخارج من الجانب لا للأعلى بقوة.\n• حساسية خفيفة بعد التركيب شائعة أياماً.\n• إن سقط التاج المؤقت احفظه واتصل فوراً — لا تستخدم غراء منزلي.\n• بعد التاج النهائي: راقب العضة؛ أي ارتفاع يستدعي زيارة سريعة.',
+                '• انتظر زوال التخدير قبل الأكل.\n• استخدم معجون للأسنان الحساسة إن لزم.\n• لا تقضم أظافرك أو افتح أغلفة بأسنانك.\n• تنظيف يومي جيد حول حافة التاج يمنع التهاب اللثة.'
+            ],
+            bridge: [
+                '• نظّف تحت الجسر بخيط خاص (Superfloss) أو فرشاة بين الأسنان يومياً.\n• تجنّب قضم الأشياء الصلبة جداً بالجسر.\n• احمرار أو نزيف لثوي مستمر عند الدعامات → راجع التقييم.\n• التزم بمواعيد المتابعة.'
+            ],
+            implant: [
+                '• أول 48 ساعة: كمادات باردة، رأس مرتفع، طعام طري بارد/فاتر.\n• لا تمضمض بقوة ولا تستخدم الشفاطة ولا تدخن (التدخين يعيق الالتئام).\n• نظّف المنطقة بلطف حسب تعليمات الجراح؛ غسول مطهر إن وُصف.\n• تورم وكدمات متوقعة عدة أيام.\n• ألم شديد مفاجئ أو إفراز قيحي أو حمى → اتصل فوراً.\n• التزم بفترة عدم التحميل على الغرسة حتى يسمح الطبيب.',
+                '• بعد زراعة الزرعة: تجنّب الرياضة العنيفة أسبوعاً.\n• نم على الجانب الآخر إن أمكن.\n• أكمل المضاد والمسكن حسب الجدول.\n• لا تلمس موقع الجراحة بلسانك باستمرار.'
+            ],
+            cleaning: [
+                '• قد تشعر بحساسية للحرارة/البرودة 24–48 ساعة — طبيعية بعد إزالة الجير.\n• قد تنزف اللثة خفيفاً يوم التنظيف ثم يتحسن مع التنظيف المنزلي.\n• استخدم فرشاة ناعمة ومعجون حساسية إن لزم.\n• تجنّب التدخين والأطعمة الملونة جداً يومك هذا إن أجريت تلميعاً.\n• كرّر التنظيف الدوري كل 6 أشهر أو حسب نصيحة الطبيب.',
+                '• اشرب ماءً كثيراً؛ تجنّب المشروبات شديدة السخونة أول ساعات.\n• استخدم الخيط يومياً لمنع عودة الجير سريعاً.\n• إن استمر النزيف أكثر من 3 أيام أو ألم شديد — راجع العيادة.'
+            ],
+            whitening: [
+                '• تجنّب 48 ساعة: القهوة، الشاي، المشروبات الغازية الملونة، التوت، الكاري، والتدخين.\n• حساسية مؤقتة شائعة — معجون للأسنان الحساسة وغسول فلورايد يساعدان.\n• لا تكرر التبييض المنزلي بجرعات أعلى من الموصوفة.\n• اشرب بقشّة إن تناولت مشروباً ملوناً بعد انتهاء فترة الحذر.'
+            ],
+            braces: [
+                '• بعد الشد: ألم خفيف 2–3 أيام — طعام طري ومسكن مناسب.\n• استخدم الشمع على السلك إن جرح الخد.\n• تجنّب السكاكر اللزجة والمكسرات الصلبة والثلج.\n• فرّش بعد كل وجبة واستخدم فرشاة بين الأسنان.\n• إن انكسر سلك أو انخلع حاصرة اتصل بالعيادة.',
+                '• حافظ على نظافة ممتازة حول الحاصرات لتجنب بقع بيضاء.\n• واظب على المواعيد؛ إهمال المطاّطة يطيل العلاج.'
+            ],
+            gum: [
+                '• التزم بتنظيف لطيف مرتين يومياً وخيط يومي رغم حساسية اللثة.\n• غسول مطهر/كلورهيكسيدين إن وُصف — لا تستخدمه أطول من المدة المحددة.\n• تجنّب التدخين؛ يقلل شفاء اللثة.\n• طعام طري إذا كانت اللثة متورمة.\n• أعد التقييم إن استمر النزيف بعد أسبوع من الالتزام.',
+                '• بعد كحت اللثة: حساسية وحركة طفيفة للأسنان قد تُلاحظ مؤقتاً.\n• مضمضة ملحية فاترة بعد 24 ساعة.\n• لا توقف التنظيف خوفاً من النزيف — النعومة أهم من التوقف.'
+            ],
+            abscess: [
+                '• أكمل المضاد الحيوي بالكامل حتى مع تحسّن الألم.\n• كمادات دافئة خارجية إن نصح الطبيب (لا ساخنة جداً).\n• لا تضغط على الخراج أو تحاول تفجيره.\n• طعام طري ومسكن حسب الوصفة.\n• راجع فوراً إن امتد التورم للعين/الرقبة أو صعوبة بلع/تنفس.'
+            ],
+            veneer: [
+                '• 48 ساعة الأولى: تجنّب الملونات القوية والعض على أشياء صلبة.\n• لا تقضم أظافراً أو أقلاماً.\n• فرشاة ناعمة وخيط يومي عند الحواف.\n• إن تحركت قشرة أو شعرت بحافة حادة راجع فوراً.'
+            ],
+            denture: [
+                '• الأيام الأولى: صعوبة كلام ومضغ طبيعية — تمرّن بالقراءة بصوت عالٍ.\n• ابدأ بطعام طري مقطّع صغير.\n• انزع الطقم ليلاً ونظّفه بفرشاة خاصة ومحلول مناسب (لا ماء مغلي).\n• نقاط ضغط مؤلمة شائعة — لا تحتملها؛ راجع لتعديل الطقم.\n• احتفظ بالطقم في ماء عند خلعه.'
+            ],
+            sealant: [
+                '• يمكنك الأكل عادة بعد انتهاء الجلسة مباشرة.\n• تجنّب قضم الثلج والأشياء الصلبة جداً على الأضراس المحمية.\n• الفرشاة والخيط كالمعتاد.\n• مراجعة دورية للتأكد من بقاء الواقي.'
+            ],
+            exam: [
+                '• التزم بخطة العلاج والمواعيد المقترحة.\n• فرشاة مرتين يومياً بمعجون فلورايد وخيط مرة يومياً.\n• قلّل السكريات المتكررة بين الوجبات.\n• إن ظهر ألم مفاجئ أو تورم قبل الموعد القادم — اتصل بالعيادة.'
+            ],
+            general: [
+                '• حافظ على نظافة الفم: فرشاة ناعمة دقيقتين مرتين يومياً وخيط يومي.\n• تجنّب التدخين والأطعمة الصلبة جداً يوم الإجراء.\n• تناول المسكن فقط حسب الإرشاد.\n• أي نزيف غزير، تورم متزايد، حمى، أو صعوبة بلع/تنفس → طوارئ/عيادة فوراً.\n• التزم بجلسة المتابعة.',
+                '• اشرب ماءً كافياً وفضّل طعاماً طرياً فاتراً أول يوم.\n• لا تستخدم غسولاً كحولياً قوياً إن كان هناك جرح.\n• سجّل أي أعراض غير معتادة وأبلغ الطبيب في المراجعة.'
+            ]
+        };
+        const en = {
+            extraction: [
+                '• Do not rinse hard or use a straw for 24 hours.\n• Bite on gauze 30–45 minutes; replace if soaked.\n• Cold compress on the cheek 10 minutes each hour on day 1.\n• Avoid smoking, hot drinks, and alcohol 48–72 hours.\n• Soft cool/lukewarm foods; do not brush the socket on day 1.\n• Heavy bleeding, severe swelling, or fever → contact the clinic.',
+                '• Protect the blood clot; do not poke the site with tongue or finger.\n• Sleep with head elevated the first night.\n• Pain relief as prescribed (e.g. paracetamol/ibuprofen if allowed).\n• Gentle salt-water rinse only after 24 hours.\n• No heavy exercise for 48 hours.\n• Swelling often peaks on day 2 — usually normal.',
+                '• After wisdom-tooth removal: swelling/bruising can last several days.\n• Cold packs first 24h, then warm if advised.\n• Finish any antibiotic course.\n• Avoid seeds, nuts, and hard rice for a week.\n• Sharp ear-radiating pain after day 3–4 may be dry socket — call us.'
+            ],
+            rootCanal: [
+                '• Tooth may stay tender to bite for several days — avoid chewing on it.\n• Take pain relief as directed.\n• If a temporary filling is placed, avoid sticky foods until the final crown.\n• Brush gently; floss carefully for 48 hours.\n• Worsening pain with swelling or fever → return to clinic.',
+                '• Root canal clears internal infection; healing still takes days.\n• Avoid hard foods on that side until crowned if recommended.\n• Complete antibiotics if prescribed.\n• Mild thermal sensitivity can last about a week.\n• Do not delay the crown appointment — the tooth can fracture.'
+            ],
+            filling: [
+                '• Do not eat on the filled side for 2 hours (until set).\n• Mild cold/sweet sensitivity is common up to 2 weeks.\n• If the bite feels high, come for a quick adjustment.\n• Avoid ice, pens, and hard nuts on the new filling.\n• Floss daily around the tooth.',
+                '• After composite: slight roughness often settles or can be polished.\n• Wait until numbness wears off before eating.\n• Throbbing night pain beyond 3 days needs review.\n• Gentle rinsing; avoid strong alcohol mouthwash day 1.'
+            ],
+            crown: [
+                '• Temporary crown: avoid sticky/hard foods and chewing on that side.\n• Brush gently; slide floss out sideways, not straight up.\n• Mild sensitivity after cementation is common for a few days.\n• If a temporary comes off, keep it and call — never use household glue.\n• Final crown: report a high bite promptly.',
+                '• Wait for anesthesia to wear off before eating.\n• Sensitivity toothpaste if needed.\n• No nail-biting or packet-opening with teeth.\n• Clean well at the crown margin to prevent gum inflammation.'
+            ],
+            bridge: [
+                '• Clean under the bridge daily with super-floss or interdental brushes.\n• Avoid biting very hard objects with the bridge.\n• Ongoing gum bleeding at abutments → review.\n• Keep follow-up visits.'
+            ],
+            implant: [
+                '• First 48h: cold packs, elevated head, soft cool foods.\n• No forceful rinsing, straws, or smoking (smoking harms healing).\n• Clean gently as the surgeon instructed; use prescribed rinse.\n• Swelling/bruising expected for several days.\n• Sudden severe pain, pus, or fever → call immediately.\n• Do not load the implant until cleared.',
+                '• Avoid intense sport for a week.\n• Sleep on the opposite side if possible.\n• Take antibiotics/painkillers on schedule.\n• Avoid constant tongue probing of the site.'
+            ],
+            cleaning: [
+                '• Hot/cold sensitivity 24–48h is common after scaling.\n• Light gum bleeding on the day often improves with home care.\n• Soft brush; sensitivity toothpaste if needed.\n• Avoid smoking and heavy staining foods if polished today.\n• Maintain 6-monthly cleans or as advised.',
+                '• Drink water; avoid very hot drinks for a few hours.\n• Daily floss slows tartar return.\n• Bleeding beyond 3 days or severe pain → clinic review.'
+            ],
+            whitening: [
+                '• For 48h avoid coffee, tea, dark sodas, berries, curry, and smoking.\n• Temporary sensitivity is common — use sensitivity toothpaste/fluoride rinse.\n• Do not overuse home trays beyond instructions.\n• Use a straw for colored drinks after the caution period.'
+            ],
+            braces: [
+                '• After tightening: soreness 2–3 days — soft food and suitable pain relief.\n• Orthodontic wax on wires that rub.\n• Avoid sticky sweets, hard nuts, and ice.\n• Brush after every meal; use interdental brushes.\n• Broken wire or loose bracket → call the clinic.',
+                '• Excellent hygiene around brackets prevents white spots.\n• Wear elastics as prescribed; missed wear lengthens treatment.'
+            ],
+            gum: [
+                '• Gentle brushing twice daily and daily floss despite tenderness.\n• Antiseptic/chlorhexidine rinse only for the prescribed duration.\n• No smoking — it delays gum healing.\n• Soft diet if gums are swollen.\n• Reassess if bleeding continues after a week of good care.',
+                '• After deep cleaning: temporary sensitivity or slight tooth mobility can occur.\n• Warm salt rinses after 24h.\n• Do not stop cleaning because of bleeding — be gentle instead.'
+            ],
+            abscess: [
+                '• Finish the full antibiotic course even if pain improves.\n• External warm compress only if advised.\n• Do not squeeze or self-lance the swelling.\n• Soft diet and prescribed pain relief.\n• Swelling spreading to eye/neck or trouble swallowing/breathing → urgent care.'
+            ],
+            veneer: [
+                '• First 48h: avoid strong stains and biting hard objects.\n• No nail or pen biting.\n• Soft brush and daily floss at the margins.\n• Loose veneer or sharp edge → return promptly.'
+            ],
+            denture: [
+                '• Early days: speech/chewing feel odd — practice reading aloud.\n• Start with soft, small-cut foods.\n• Leave dentures out at night; clean with a denture brush (never boiling water).\n• Sore pressure spots are common — return for adjustment, don’t endure them.\n• Store dentures in water when out of the mouth.'
+            ],
+            sealant: [
+                '• You can usually eat right after the visit.\n• Avoid chewing ice and very hard items on sealed molars.\n• Brush and floss as normal.\n• Periodic checks confirm sealants are intact.'
+            ],
+            exam: [
+                '• Follow the proposed treatment plan and appointments.\n• Brush twice daily with fluoride toothpaste; floss once daily.\n• Cut frequent sugary snacks between meals.\n• Sudden pain or swelling before the next visit → call the clinic.'
+            ],
+            general: [
+                '• Soft brush 2 minutes twice daily and daily floss.\n• Avoid smoking and very hard foods on treatment day.\n• Pain relief only as directed.\n• Heavy bleeding, rising swelling, fever, or breathing/swallowing trouble → urgent care.\n• Keep your review appointment.',
+                '• Stay hydrated; prefer soft lukewarm food day 1.\n• Avoid strong alcohol mouthwash if there is a wound.\n• Note unusual symptoms and report them at review.'
+            ]
+        };
+        return lang === 'ar' ? ar : en;
+    }
+
+    function pickVariant(list, salt) {
+        if (!list || !list.length) return '';
+        // Vary by procedure text + day so same patient can see different tips over time
+        const day = new Date().toDateString();
+        let h = 0;
+        const s = String(salt) + '|' + day;
+        for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i) | 0;
+        return list[Math.abs(h) % list.length];
+    }
+
+    function getLocalAdvice(proc, teeth) {
+        const cat = classifyProcedure(proc);
+        const lib = adviceLibrary();
+        const list = lib[cat] || lib.general;
+        let text = pickVariant(list, (proc || '') + '|' + (teeth || []).join(','));
+        const teethNote = (teeth && teeth.length)
+            ? (lang === 'ar'
+                ? `\n• ركّز العناية على السن/الأسنان المصابة (FDI: ${teeth.join(', ')}): نظّف بلطف وتجنّب المضغ القاسي عليها حتى يسمح الطبيب.`
+                : `\n• Focus care on the treated tooth/teeth (FDI: ${teeth.join(', ')}): clean gently and avoid heavy chewing there until cleared.`)
+            : '';
+        const header = lang === 'ar'
+            ? `بعد إجراء «${proc || 'عام'}»:`
+            : `After «${proc || 'general'}»:`;
+        return header + '\n' + text + teethNote;
+    }
+
+    async function fillPatientAdvice(visit) {
+        const el = document.getElementById('medicalAdvice');
+        if (!el) return;
+        const local = getLocalAdvice(visit.proc, visit.teeth);
+        el.textContent = local;
+
+        // If Gemini key exists, enrich with procedure-specific AI advice
+        if (!getApiKey()) return;
+        try {
+            const teethStr = (visit.teeth && visit.teeth.length) ? visit.teeth.join(', ') : (lang === 'ar' ? 'غير محدد' : 'not specified');
+            const prompt = lang === 'ar'
+                ? `أنت طبيب أسنان. اكتب تعليمات ما بعد العلاج قصيرة وعملية (4 إلى 7 نقاط) بالعربية الفصحى المبسطة، مخصصة فقط لهذا الإجراء: "${visit.proc || 'فحص'}". الأسنان المعنية (FDI): ${teethStr}.
+القواعد: لا مقدمة طويلة، لا تشخيص، لا أدوية بجرعات إلا بصيغة "حسب وصفة الطبيب". إن كان الإجراء غير واضح أعطِ إرشادات فموية عامة حذرة. أعد النص فقط كنقاط.`
+                : `You are a dentist. Write short practical post-treatment aftercare (4–7 bullet points) in clear English, tailored ONLY to this procedure: "${visit.proc || 'exam'}". Involved teeth (FDI): ${teethStr}.
+Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If procedure is unclear, give cautious general oral care. Return plain text bullets only.`;
+
+            const raw = await callGemini(prompt, { json: false });
+            const cleaned = (raw || '').trim()
+                .replace(/^```(?:\w+)?\s*/i, '')
+                .replace(/\s*```$/i, '')
+                .trim();
+            if (cleaned.length > 40) {
+                el.textContent = cleaned + '\n\n—\n' + (lang === 'ar' ? '(مدعوم بـ Gemini + إرشادات العيادة)' : '(Gemini-assisted + clinic guidance)');
             }
+        } catch (e) {
+            console.warn('Gemini advice fallback to local', e);
         }
+    }
 
-        function printPatientCard() {
-            const pId = document.getElementById('modal-patient-id').value;
-            const patient = db.patients[pId];
-            if(!patient) return;
+    function nextId() {
+        if (!patients.length) return 1;
+        return Math.max(...patients.map(p => Number(p.id) || 0), 0) + 1;
+    }
 
-            // Fill Print Area
-            document.getElementById('print-id').innerText = patient.id;
-            document.getElementById('print-name').innerText = patient.name;
-            document.getElementById('print-phone').innerText = patient.phone || '---';
-            document.getElementById('print-date').innerText = getToday();
+    function addManualRow() {
+        const name = prompt(t('promptName'));
+        if (!name || !name.trim()) return;
+        const phone = prompt(t('promptPhone')) || '';
+        const proc = prompt(t('promptProc')) || t('procExam');
+        const due = parseFloat(prompt(t('promptDue')) || '0') || 0;
+        const paid = parseFloat(prompt(t('promptPaid')) || '0') || 0;
+        const existing = patients.find(p => p.name === name.trim());
+        const id = existing ? existing.id : nextId();
+        const uid = 'u' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        patients.push({
+            uid, id, name: name.trim(), phone,
+            date: new Date().toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB'),
+            proc, due, paid, teeth: []
+        });
+        persist();
+        renderSchedule();
+        openTeethModal(uid);
+    }
 
-            document.getElementById('print-dues').innerText = document.getElementById('modal-total-dues').innerText;
-            document.getElementById('print-paid').innerText = document.getElementById('modal-total-paid').innerText;
-            document.getElementById('print-balance').innerText = document.getElementById('modal-balance').innerText;
-            
-            document.getElementById('print-tbody').innerHTML = document.getElementById('modal-record-tbody').innerHTML;
-
-            // Trigger Print (CSS will hide everything else)
-            window.print();
+    // ── Gemini API ────────────────────────────────────────────────────
+    async function callGemini(promptText, opts) {
+        const key = getApiKey();
+        if (!key) throw new Error('NO_KEY');
+        const model = getModel();
+        const asJson = !opts || opts.json !== false;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+        const generationConfig = {
+            temperature: asJson ? 0.2 : 0.55
+        };
+        if (asJson) generationConfig.responseMimeType = 'application/json';
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: promptText }] }],
+                generationConfig
+            })
+        });
+        if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            console.error('Gemini error', res.status, errText);
+            throw new Error('API_' + res.status);
         }
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return text;
+    }
 
-        // --- Import Data ---
-        function openImportModal() {
-            document.getElementById('import-textarea').value = '';
-            openModal('import-modal');
+    function buildPatientPrompt(spokenText) {
+        return `You are a dental clinic assistant. Extract patient visit data from the spoken/transcribed text.
+Return ONLY valid JSON with these fields:
+{
+  "name": "patient full name",
+  "phone": "phone number or empty string",
+  "proc": "procedure in ${lang === 'ar' ? 'Arabic' : 'English'} (e.g. ${lang === 'ar' ? 'خلع/حشو/تنظيف/فحص' : 'extraction/filling/cleaning/exam'})",
+  "due": number (amount owed, 0 if unknown),
+  "paid": number (amount paid, 0 if unknown),
+  "teeth": [FDI tooth numbers as integers if mentioned, else []]
+}
+FDI examples: upper right third molar=18, upper right central=11, upper left central=21, lower left central=31, lower right central=41.
+If name is missing use "${lang === 'ar' ? 'مريض' : 'Patient'}".
+Spoken text:
+"""${spokenText}"""`;
+    }
+
+    function parseGeminiJson(raw) {
+        let s = (raw || '').trim();
+        // strip markdown fences if any
+        s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+        const start = s.indexOf('{');
+        const end = s.lastIndexOf('}');
+        if (start >= 0 && end > start) s = s.slice(start, end + 1);
+        return JSON.parse(s);
+    }
+
+    // ── Voice → SpeechRecognition → Gemini parse ─────────────────────
+    function startVoiceInput() {
+        if (!getApiKey()) {
+            alert(t('noApiKey'));
+            document.getElementById('apiPanel').classList.remove('hidden');
+            changingKey = false;
+            refreshApiStatus();
+            return;
         }
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            alert(t('voiceUnsupported'));
+            return;
+        }
+        const status = document.getElementById('voiceStatus');
+        const btn = document.getElementById('voiceBtn');
+        const rec = new SR();
+        rec.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+        rec.continuous = false;
 
-        function processImport() {
-            const text = document.getElementById('import-textarea').value.trim();
-            if(!text) { showMsg("الرجاء لصق البيانات أولاً."); return; }
+        status.textContent = t('voiceListening');
+        btn.classList.add('animate-pulse');
+        btn.disabled = true;
 
-            const rows = text.split('\n');
-            let importedCount = 0;
-            const curDate = document.getElementById('filter-date').value || getToday();
+        rec.onresult = async (e) => {
+            const text = e.results[0][0].transcript || '';
+            status.textContent = t('voiceParsing') + ' «' + text + '»';
+            try {
+                await processVoiceWithGemini(text);
+                status.textContent = t('voiceDone');
+            } catch (err) {
+                console.error(err);
+                if (err.message === 'NO_KEY') alert(t('noApiKey'));
+                else alert(t('apiError') + (err.message ? ' (' + err.message + ')' : ''));
+                status.textContent = t('apiError');
+            } finally {
+                btn.classList.remove('animate-pulse');
+                btn.disabled = false;
+                setTimeout(() => { status.textContent = ''; }, 4000);
+            }
+        };
+        rec.onerror = () => {
+            alert(t('voiceError'));
+            status.textContent = '';
+            btn.classList.remove('animate-pulse');
+            btn.disabled = false;
+        };
+        rec.onend = () => {
+            btn.classList.remove('animate-pulse');
+            btn.disabled = false;
+        };
+        rec.start();
+    }
 
-            rows.forEach(row => {
-                // Try to split by Tab (Excel default paste) or commas
-                const cols = row.split(/\t|,/).map(c => c.trim());
-                if(cols.length >= 2 && cols[0]) {
-                    // Mapping: Name | Phone | Time | Treatment | Dues | Paid
-                    const name = cols[0];
-                    const phone = cols[1] || '';
-                    const time = cols[2] || '00:00';
-                    const treatment = cols[3] || 'كشف';
-                    const dues = parseFloat(cols[4]) || 0;
-                    const payments = parseFloat(cols[5]) || 0;
+    async function processVoiceWithGemini(spokenText) {
+        const raw = await callGemini(buildPatientPrompt(spokenText));
+        let data;
+        try {
+            data = parseGeminiJson(raw);
+        } catch (e) {
+            console.warn('JSON parse failed, fallback', raw);
+            data = { name: spokenText.slice(0, 40), phone: '', proc: t('procExam'), due: 0, paid: 0, teeth: [] };
+        }
+        const name = (data.name || '').trim() || (lang === 'ar' ? 'مريض' : 'Patient');
+        const phone = (data.phone || '').toString();
+        const proc = (data.proc || t('procExam')).toString();
+        const due = parseFloat(data.due) || 0;
+        const paid = parseFloat(data.paid) || 0;
+        let teeth = Array.isArray(data.teeth)
+            ? data.teeth.map(n => parseInt(n, 10)).filter(n => n >= 11 && n <= 48)
+            : [];
 
-                    // Create minimal patient
-                    let pId = Math.floor(1000 + Math.random() * 9000).toString();
-                    while(db.patients[pId]) pId = Math.floor(1000 + Math.random() * 9000).toString();
-                    
-                    db.patients[pId] = { id: pId, name, phone };
-                    
-                    db.appointments.push({
-                        id: 'APP-' + Date.now() + '-' + importedCount,
-                        patientId: pId,
-                        date: curDate,
-                        time: time,
-                        treatment: treatment,
-                        dues: dues,
-                        payments: payments
+        const existing = patients.find(p => p.name === name);
+        const id = existing ? existing.id : nextId();
+        const uid = 'u' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        patients.push({
+            uid, id, name, phone,
+            date: new Date().toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB'),
+            proc, due, paid, teeth
+        });
+        persist();
+        renderSchedule();
+        if (!teeth.length) openTeethModal(uid);
+        else alert(t('voiceDone') + ': ' + name + (teeth.length ? ' — FDI ' + teeth.join(', ') : ''));
+    }
+
+    // ── CSV ───────────────────────────────────────────────────────────
+    function exportCSV() {
+        const headers = ['id', 'name', 'phone', 'date', 'proc', 'due', 'paid', 'teeth'];
+        const rows = patients.map(p => [
+            p.id, csvEscape(p.name), csvEscape(p.phone), csvEscape(p.date),
+            csvEscape(p.proc), p.due, p.paid, csvEscape((p.teeth || []).join('|'))
+        ].join(','));
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + headers.join(',') + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'patients_' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    function csvEscape(v) {
+        const s = String(v ?? '');
+        if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+    }
+    function importCSV(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const lines = reader.result.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim());
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = parseCsvLine(lines[i]);
+                    if (!cols.length || !cols[1]) continue;
+                    const teeth = (cols[7] || '').split('|').map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+                    patients.push({
+                        uid: 'u' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 5),
+                        id: parseInt(cols[0], 10) || nextId(),
+                        name: cols[1] || '', phone: cols[2] || '', date: cols[3] || '',
+                        proc: cols[4] || '', due: parseFloat(cols[5]) || 0, paid: parseFloat(cols[6]) || 0, teeth
                     });
-                    importedCount++;
                 }
-            });
-
-            if(importedCount > 0) {
-                saveDB();
+                persist();
                 renderSchedule();
-                closeModal('import-modal');
-                showMsg(`تم استيراد ${importedCount} موعد بنجاح!`);
+                alert(t('importDone'));
+            } catch (err) {
+                console.error(err);
+                alert(t('importError'));
+            }
+            input.value = '';
+        };
+        reader.onerror = () => alert(t('importError'));
+        reader.readAsText(file, 'UTF-8');
+    }
+    function parseCsvLine(line) {
+        const result = []; let cur = ''; let inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (inQ) {
+                if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+                else if (c === '"') inQ = false;
+                else cur += c;
             } else {
-                showMsg("لم يتم التعرف على أي بيانات صالحة. تأكد من التنسيق.");
+                if (c === '"') inQ = true;
+                else if (c === ',') { result.push(cur); cur = ''; }
+                else cur += c;
             }
         }
+        result.push(cur);
+        return result;
+    }
 
-        // --- Export Data ---
-        function exportToExcel() {
-            if (db.appointments.length === 0) {
-                showMsg("لا توجد بيانات لتصديرها."); return;
-            }
-            let csv = "\uFEFFرقم الملف,اسم المريض,رقم الهاتف,التاريخ,الوقت,الإجراء الطبي,المستحقات,المدفوعات,الرصيد المتبقي\n";
-            db.appointments.forEach(app => {
-                const p = db.patients[app.patientId] || { name: '', phone: '' };
-                const bal = app.dues - app.payments;
-                const row = [app.patientId, p.name, p.phone, app.date, app.time, app.treatment, app.dues, app.payments, bal];
-                csv += row.map(str => `"${String(str).replace(/"/g, '""')}"`).join(",") + "\n";
-            });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `عيادة_الأسنان_${getToday()}.csv`;
-            link.click();
+    // ── Calculator ────────────────────────────────────────────────────
+    function cl() { calcExpr = ''; document.getElementById('display').value = '0'; }
+    function add(ch) {
+        if (calcExpr === '0' && ch !== '.') calcExpr = '';
+        const map = { '×': '*', '−': '-' };
+        calcExpr += map[ch] || ch;
+        document.getElementById('display').value = calcExpr;
+    }
+    function calc() {
+        try {
+            if (!/^[\d.+\-*/\s]+$/.test(calcExpr)) throw new Error('bad');
+            const result = Function('"use strict"; return (' + calcExpr + ')')();
+            calcExpr = String(result);
+            document.getElementById('display').value = calcExpr;
+        } catch (e) {
+            document.getElementById('display').value = 'Error';
+            calcExpr = '';
         }
+    }
 
-        // --- Floating Calculator ---
-        function toggleCalculator() {
-            const panel = document.getElementById('calculator-panel');
-            if (panel.classList.contains('hidden')) {
-                panel.classList.remove('hidden');
-                document.getElementById('calc-display').value = '0'; // Reset on open
-            } else {
-                panel.classList.add('hidden');
-            }
-        }
+    document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+    document.getElementById('teethModal').addEventListener('click', e => { if (e.target.id === 'teethModal') closeTeethModal(); });
 
-        let calcMemory = '';
-        function calcPress(btn) {
-            const disp = document.getElementById('calc-display');
-            if (btn === 'C') {
-                disp.value = '0';
-                calcMemory = '';
-                return;
-            }
-            
-            // Replace visual operators with math operators
-            let mathOp = btn;
-            if (btn === '×') mathOp = '*';
-            if (btn === '÷') mathOp = '/';
-            if (btn === '−') mathOp = '-';
-            
-            if (disp.value === '0' && btn !== '.' && !['+','-','*','/'].includes(mathOp)) {
-                disp.value = mathOp;
-            } else {
-                disp.value += mathOp;
-            }
-        }
-
-        function calcCalculate() {
-            const disp = document.getElementById('calc-display');
-            try {
-                // تنظيف المدخلات لمنع الثغرات والأخطاء المطبعية
-                const sanitized = disp.value.replace(/[^0-9+\-*/().]/g, '');
-                if (!sanitized) return;
-                
-                const result = new Function('return ' + sanitized)();
-                if(!isFinite(result) || isNaN(result)) throw new Error("Invalid");
-                disp.value = parseFloat(result.toFixed(4)); 
-            } catch (e) {
-                disp.value = 'خطأ';
-                setTimeout(() => {
-                    if (document.getElementById('calc-display').value === 'خطأ') {
-                        document.getElementById('calc-display').value = '0';
-                    }
-                }, 1000);
-            }
-        }
-
-        // --- Voice AI (Gemini) ---
-        let speechRecog;
-        function startVoiceDictation() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                showMsg("متصفحك لا يدعم التعرف على الصوت."); return;
-            }
-
-            speechRecog = new SpeechRecognition();
-            speechRecog.lang = 'ar-SA';
-            speechRecog.interimResults = false;
-            
-            const btn = document.getElementById('voice-btn');
-            const status = document.getElementById('voice-status');
-
-            speechRecog.onstart = () => {
-                status.innerText = "جاري الاستماع... تحدث الآن";
-                status.classList.remove('hidden');
-                btn.disabled = true;
-            };
-
-            speechRecog.onresult = async (event) => {
-                const transcript = event.results[0][0].transcript;
-                status.innerText = "جاري تحليل النص عبر الذكاء الاصطناعي...";
-                await sendToGemini(transcript);
-                status.classList.add('hidden');
-                btn.disabled = false;
-            };
-
-            speechRecog.onerror = () => {
-                status.classList.add('hidden');
-                btn.disabled = false;
-                showMsg("لم يتم التقاط الصوت بشكل صحيح.");
-            };
-
-            speechRecog.start();
-        }
-
-        async function sendToGemini(text) {
-            const apiKey = ""; // Canvas Environment Inject
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-            
-            const prompt = `استخرج بيانات الموعد بصيغة JSON فقط: "${text}". المفاتيح المطلوبة: "name", "time" (بصيغة HH:MM), "treatment", "dues" (رقم), "payments" (رقم). تاريخ اليوم: ${getToday()}`;
-
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
-            };
-
-            try {
-                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const data = await response.json();
-                
-                if (data.candidates && data.candidates[0].content) {
-                    let responseText = data.candidates[0].content.parts[0].text;
-                    
-                    // إزالة علامات Markdown إذا أضافها الذكاء الاصطناعي
-                    responseText = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
-                    
-                    const parsed = JSON.parse(responseText);
-                    
-                    document.getElementById('form-patient-id').value = ""; 
-                    if(parsed.name) document.getElementById('form-name').value = parsed.name;
-                    if(parsed.time) document.getElementById('form-time').value = parsed.time;
-                    if(parsed.treatment) document.getElementById('form-treatment').value = parsed.treatment;
-                    if(parsed.dues !== undefined) document.getElementById('form-dues').value = parsed.dues;
-                    if(parsed.payments !== undefined) document.getElementById('form-payments').value = parsed.payments;
-                    
-                    showMsg("تم استخراج البيانات بنجاح! يرجى مراجعتها وحفظها.");
-                } else {
-                    showMsg("فشل الاتصال: تأكد من صلاحية مفتاح API الخاص بـ Gemini.");
-                }
-            } catch (error) {
-                console.error("Gemini Error:", error);
-                showMsg("خطأ: لم نتمكن من تحليل الصوت، أو أن هناك مشكلة في الاتصال بالذكاء الاصطناعي.");
-            }
-        }
+    setLang(lang);
+    refreshApiStatus();
     </script>
 </body>
 </html>
