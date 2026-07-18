@@ -7,19 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-size: 17px;
+            line-height: 1.55;
+        }
         .row-even { background-color: #ffffff; }
         .row-odd { background-color: #f1f5f9; }
         input:focus, select:focus { outline: 2px solid #6366f1; }
         .calc-btn:active { transform: scale(0.95); }
+        #schedule-tbody td, #schedule-tbody input, thead th {
+            font-size: 1.05rem;
+        }
+        thead th { font-weight: 700; letter-spacing: 0.01em; }
+        .app-btn { font-size: 1.05rem; }
+        .status-msg { font-size: 1.05rem; }
+        .modal-body-text { font-size: 1.08rem; }
         .cell-editable {
             cursor: cell;
-            min-width: 72px;
-            max-width: 220px;
+            min-width: 80px;
+            max-width: 280px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             vertical-align: middle;
+            font-size: 1.05rem;
+            padding-top: 0.85rem !important;
+            padding-bottom: 0.85rem !important;
         }
         .cell-editable:hover { background-color: #eef2ff; outline: 1px dashed #a5b4fc; }
         .cell-editable.editing {
@@ -199,20 +214,20 @@
                 <button id="langAr" onclick="setLang('ar')" class="px-3 py-2 text-sm font-bold bg-blue-600">عربي</button>
                 <button id="langEn" onclick="setLang('en')" class="px-3 py-2 text-sm font-bold bg-slate-700">EN</button>
             </div>
-            <button onclick="startGoodMorning()" class="bg-orange-400 hover:bg-orange-500 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold">
+            <button onclick="startGoodMorning()" class="bg-orange-400 hover:bg-orange-500 text-slate-900 px-4 py-2.5 rounded-lg text-base font-bold app-btn">
                 <i class="fa-solid fa-sun ml-1"></i> <span data-i18n="goodMorning">صباح الخير</span>
             </button>
-            <button onclick="toggleApiPanel()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold">
+            <button onclick="toggleApiPanel()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2.5 rounded-lg text-base font-bold app-btn">
                 <i class="fa-solid fa-key ml-1"></i> <span data-i18n="apiSettings">مفتاح Gemini</span>
             </button>
-            <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-bold" data-i18n="exportExcel">تصدير Excel</button>
+            <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-lg text-base font-bold app-btn" data-i18n="exportExcel">تصدير Excel</button>
         </div>
     </header>
 
     <!-- AI aftercare notice -->
     <div class="mb-6 no-print bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-2xl px-4 py-3 flex gap-3 items-start shadow-sm">
         <i class="fa-solid fa-circle-info text-indigo-500 mt-0.5 shrink-0"></i>
-        <p class="text-sm font-medium leading-relaxed" data-i18n="aiAftercareNotice">
+        <p class="text-base font-medium leading-relaxed" data-i18n="aiAftercareNotice">
             سجلات المرضى تتضمن تعليمات ما بعد العلاج مولّدة بالذكاء الاصطناعي بناءً على الإجراء المسجّل.
         </p>
     </div>
@@ -271,9 +286,9 @@
 
     <!-- Main Controls -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center no-print">
-        <button onclick="addManualRow()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700" data-i18n="addManual">إضافة سجل يدوي</button>
+        <button onclick="addManualRow()" class="bg-indigo-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-indigo-700 text-base app-btn" data-i18n="addManual">إضافة سجل يدوي</button>
         <button id="voiceBtn" type="button"
-            class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-purple-700 select-none"
+            class="bg-purple-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-purple-700 select-none text-base app-btn"
             title="Push to talk"
             onmousedown="voicePttDown(event)"
             onmouseup="voicePttUp(event)"
@@ -287,30 +302,30 @@
         <button id="voiceCancelBtn" type="button" onclick="cancelVoiceSession()"
             class="hidden bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-3 rounded-xl font-bold text-sm"
             data-i18n="voiceCancel">إلغاء الصوت</button>
-        <select id="sortOrder" onchange="renderSchedule()" class="p-3 rounded-xl border border-slate-300">
+        <select id="sortOrder" onchange="renderSchedule()" class="p-3.5 rounded-xl border border-slate-300 text-base">
             <option value="asc" data-i18n="sortAsc">الاسم (أ-ي)</option>
             <option value="desc" data-i18n="sortDesc">الاسم (ي-أ)</option>
         </select>
         <input type="file" id="fileInput" class="hidden" accept=".csv,text/csv" onchange="importCSV(this)">
-        <button onclick="document.getElementById('fileInput').click()" class="bg-slate-600 text-white px-6 py-3 rounded-xl" data-i18n="importCsv">استيراد CSV</button>
-        <span id="voiceStatus" class="text-sm text-purple-700 font-medium max-w-md"></span>
-        <span class="text-xs text-slate-400" data-i18n="editHint">انقر على خلية لتعديلها · Enter للحفظ · Esc للإلغاء</span>
+        <button onclick="document.getElementById('fileInput').click()" class="bg-slate-600 text-white px-6 py-3.5 rounded-xl text-base app-btn" data-i18n="importCsv">استيراد CSV</button>
+        <span id="voiceStatus" class="status-msg text-base text-purple-700 font-medium max-w-lg"></span>
+        <span class="text-sm text-slate-500" data-i18n="editHint">انقر على خلية لتعديلها · Enter للحفظ · Esc للإلغاء</span>
     </div>
 
     <!-- Table -->
     <div class="bg-white p-2 rounded-2xl shadow-lg border border-slate-200 overflow-x-auto mb-8 no-print">
         <table class="w-full text-right border-collapse">
-            <thead class="bg-slate-100 text-slate-700 text-sm">
+            <thead class="bg-slate-100 text-slate-700 text-base">
                 <tr>
-                    <th class="p-3" data-i18n="colId">الرقم</th>
-                    <th class="p-3" data-i18n="colName">اسم المريض</th>
-                    <th class="p-3" data-i18n="colPhone">الهاتف</th>
-                    <th class="p-3" data-i18n="colDate">التاريخ والوقت</th>
-                    <th class="p-3" data-i18n="colProc">الإجراء</th>
-                    <th class="p-3" data-i18n="colTeeth">الأسنان</th>
-                    <th class="p-3" data-i18n="colDue">المستحقات</th>
-                    <th class="p-3" data-i18n="colPaid">المدفوعات</th>
-                    <th class="p-3" data-i18n="colActions">إجراءات</th>
+                    <th class="p-4" data-i18n="colId">الرقم</th>
+                    <th class="p-4" data-i18n="colName">اسم المريض</th>
+                    <th class="p-4" data-i18n="colPhone">الهاتف</th>
+                    <th class="p-4" data-i18n="colDate">التاريخ والوقت</th>
+                    <th class="p-4" data-i18n="colProc">الإجراء</th>
+                    <th class="p-4" data-i18n="colTeeth">الأسنان</th>
+                    <th class="p-4" data-i18n="colDue">المستحقات</th>
+                    <th class="p-4" data-i18n="colPaid">المدفوعات</th>
+                    <th class="p-4" data-i18n="colActions">إجراءات</th>
                 </tr>
             </thead>
             <tbody id="schedule-tbody"></tbody>
@@ -355,8 +370,8 @@
                 <div id="patientVisits" class="mt-4 space-y-4"></div>
                 <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
                     <h4 class="font-bold text-yellow-800" data-i18n="aftercare">تعليمات ما بعد العلاج:</h4>
-                    <p id="adviceProcLabel" class="text-xs text-yellow-700 font-semibold mt-1"></p>
-                    <p id="medicalAdvice" class="text-sm mt-2 whitespace-pre-line leading-relaxed"></p>
+                    <p id="adviceProcLabel" class="text-sm text-yellow-700 font-semibold mt-1"></p>
+                    <p id="medicalAdvice" class="text-base mt-2 whitespace-pre-line leading-relaxed modal-body-text"></p>
                 </div>
             </div>
             <div class="mt-6 flex flex-wrap gap-3">
@@ -377,21 +392,21 @@
                         <i class="fa-solid fa-sun text-orange-400 ml-2"></i>
                         <span data-i18n="goodMorning">صباح الخير</span>
                     </h2>
-                    <p class="text-xs text-slate-500 mt-1" data-i18n="gmHint">مساعد الصباح يقرأ مواعيد اليوم ويجيب عن أسئلتك — يعمل بدون مفتاح Gemini</p>
+                    <p class="text-sm text-slate-500 mt-1" data-i18n="gmHint">مساعد صباحي مدعوم بالكامل بـ Gemini — يحتاج مفتاح API مجاني</p>
                 </div>
-                <button type="button" onclick="closeGoodMorning()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-sm font-bold" data-i18n="close">إغلاق</button>
+                <button type="button" onclick="closeGoodMorning()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-base font-bold" data-i18n="close">إغلاق</button>
             </div>
 
-            <div id="gmBriefing" class="mb-4 p-4 rounded-2xl bg-orange-50 border border-orange-200 text-sm text-slate-800 leading-relaxed whitespace-pre-line"></div>
+            <div id="gmBriefing" class="mb-4 p-4 rounded-2xl bg-orange-50 border border-orange-200 text-base text-slate-800 leading-relaxed whitespace-pre-line modal-body-text"></div>
 
             <div class="mb-3 flex flex-wrap items-center gap-2">
-                <span class="text-xs font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-600" data-i18n="gmSourceLabel">مصدر الرد:</span>
-                <span id="gmSourceBadge" class="text-xs font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800">Local</span>
+                <span class="text-sm font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-600" data-i18n="gmSourceLabel">مصدر الرد:</span>
+                <span id="gmSourceBadge" class="text-sm font-bold px-2 py-1 rounded-lg bg-violet-100 text-violet-800">Gemini</span>
             </div>
 
-            <div id="gmChat" class="space-y-2 max-h-52 overflow-y-auto mb-4 text-sm"></div>
+            <div id="gmChat" class="space-y-2 max-h-52 overflow-y-auto mb-4 text-base"></div>
 
-            <p id="gmStatus" class="text-sm text-orange-800 font-medium mb-3 min-h-[1.25rem]"></p>
+            <p id="gmStatus" class="status-msg text-base text-orange-800 font-medium mb-3 min-h-[1.25rem]"></p>
 
             <div class="flex flex-wrap gap-3 items-center">
                 <button id="gmPttBtn" type="button"
@@ -533,25 +548,29 @@
             voiceGot: 'تم تسجيل',
             voiceSkipped: 'تم التخطي',
             voiceHoldToAnswer: 'اضغط مطولاً على زر الميكروفون وأجب، ثم أفلت',
-            voiceStarting: 'بدء المساعد الصوتي… اسم المريض ثم الإجراء فقط',
+            voiceStarting: 'بدء المساعد الصوتي (Gemini)… اسم المريض ثم الإجراء',
             voiceCancelled: 'تم إلغاء الإدخال الصوتي',
             voiceProcessing: 'جاري حفظ السجل…',
             voiceEmptyAnswer: 'لم أسمع إجابة — اضغط مطولاً وحاول مرة أخرى',
+            voiceNeedKey: 'الإدخال الصوتي يعتمد على Gemini فقط. أضف مفتاح API المجاني أولاً.',
+            voiceGeminiParse: '⏳ Gemini يفهم الإجابة…',
             markTeethHint: '— انقر أيقونة الأسنان لتحديد الأسنان المصابة',
             aiAftercareNotice: 'سجلات المرضى تتضمن تعليمات ما بعد العلاج مولّدة بالذكاء الاصطناعي بناءً على الإجراء المسجّل.',
             goodMorning: 'صباح الخير',
-            gmHint: 'مساعد الصباح يقرأ مواعيد اليوم ويجيب عن أسئلتك — يعمل بدون مفتاح Gemini',
+            gmHint: 'مساعد صباحي مدعوم بالكامل بـ Gemini — يحتاج مفتاح API مجاني',
             gmHoldAsk: 'اضغط مطولاً واسأل عن مواعيد اليوم',
             gmListening: '🔴 جاري الاستماع… أفلت عند الانتهاء',
-            gmThinking: 'جاري التفكير…',
+            gmThinking: 'Gemini يفكّر…',
             gmReread: 'أعد القراءة',
-            gmExamples: 'مثال: كم مريض اليوم؟ · من أول مريض؟ · رتّب المواعيد · متى موعد أحمد؟',
+            gmExamples: 'مثال: كم مريض اليوم؟ · من أول مريض؟ · هل يوجد خلع؟ · اقرأ الجدول مرة أخرى',
             gmSourceLabel: 'مصدر الرد:',
-            gmSourceLocal: 'محلي (بدون API)',
-            gmSourceGemini: 'Gemini (اختياري)',
+            gmSourceLocal: 'محلي',
+            gmSourceGemini: 'Gemini AI',
             gmNoAppts: 'صباح الخير! لا توجد مواعيد مسجّلة لليوم. يوم هادئ في العيادة.',
             gmEmptyAnswer: 'لم أسمع سؤالاً — اضغط مطولاً وحاول مرة أخرى',
-            gmAskPrompt: 'اسألني عن مواعيد اليوم بالضغط المطوّل على زر الميكروفون.',
+            gmAskPrompt: 'اسألني عن مواعيد اليوم بالضغط المطوّل على زر الميكروفون (Gemini).',
+            gmNeedKey: 'ميزة «صباح الخير» تعمل بـ Gemini فقط. أضف مفتاحك المجاني من زر مفتاح Gemini.',
+            gmGenerating: 'Gemini يجهّز تحية الصباح وقراءة المواعيد…',
             noApiKey: 'أدخل مفتاح Gemini API أولاً (زر مفتاح Gemini أعلى الصفحة)',
             apiError: 'خطأ من Gemini API',
             exportDone: 'تم التصدير', importDone: 'تم الاستيراد', importError: 'خطأ في قراءة الملف',
@@ -624,25 +643,29 @@
             voiceGot: 'Got',
             voiceSkipped: 'Skipped',
             voiceHoldToAnswer: 'Hold the microphone button, answer, then release',
-            voiceStarting: 'Starting voice assistant… name then procedure only',
+            voiceStarting: 'Starting Gemini voice assistant… name then procedure',
             voiceCancelled: 'Voice input cancelled',
             voiceProcessing: 'Saving the record…',
             voiceEmptyAnswer: 'No answer heard — hold the button and try again',
+            voiceNeedKey: 'Voice input is Gemini-only. Add your free API key first.',
+            voiceGeminiParse: '⏳ Gemini is understanding your answer…',
             markTeethHint: '— click the teeth icon to mark affected teeth',
             aiAftercareNotice: 'Patient records include AI-generated aftercare instructions based on the recorded procedure.',
             goodMorning: 'Good Morning',
-            gmHint: 'Morning assistant reads today’s appointments and answers questions — works without a Gemini key',
+            gmHint: 'Fully Gemini-powered morning assistant — free API key required',
             gmHoldAsk: 'Hold and ask about today’s schedule',
             gmListening: '🔴 Listening… release when done',
-            gmThinking: 'Thinking…',
+            gmThinking: 'Gemini is thinking…',
             gmReread: 'Read again',
-            gmExamples: 'e.g. How many patients today? · Who is first? · Sort by time · When is Ahmed?',
+            gmExamples: 'e.g. How many patients today? · Who is first? · Any extractions? · Read the schedule again',
             gmSourceLabel: 'Answer source:',
-            gmSourceLocal: 'Local (no API)',
-            gmSourceGemini: 'Gemini (optional)',
+            gmSourceLocal: 'Local',
+            gmSourceGemini: 'Gemini AI',
             gmNoAppts: 'Good morning! There are no appointments recorded for today. A quiet clinic day.',
             gmEmptyAnswer: 'No question heard — hold the mic and try again',
-            gmAskPrompt: 'Ask about today’s appointments by holding the microphone button.',
+            gmAskPrompt: 'Hold the mic to ask about today’s appointments (Gemini).',
+            gmNeedKey: 'Good Morning is Gemini-only. Add your free key via the Gemini Key button.',
+            gmGenerating: 'Gemini is preparing your morning greeting and schedule…',
             noApiKey: 'Enter your Gemini API key first (Gemini Key button in the header)',
             apiError: 'Gemini API error',
             exportDone: 'Export complete', importDone: 'Import complete', importError: 'Error reading file',
@@ -1196,7 +1219,7 @@
                 <td class="p-3 border text-center">
                     <div class="flex flex-col items-center gap-1">
                         ${renderMiniTeeth(p.teeth)}
-                        <button type="button" onclick="openTeethModal('${p.uid}')" class="text-xs text-indigo-600 hover:underline" title="${t('selectTeeth')}">
+                        <button type="button" onclick="openTeethModal('${p.uid}')" class="text-sm text-indigo-600 hover:underline" title="${t('selectTeeth')}">
                             <i class="fa-solid fa-pen-to-square"></i>
                             ${(p.teeth && p.teeth.length) ? '<span class="text-red-600 font-bold">'+p.teeth.join(',')+'</span>' : ''}
                         </button>
@@ -1242,22 +1265,22 @@
         const balance = totalDue - totalPaid;
 
         document.getElementById('patientDetails').innerHTML = `
-            <p><strong>${t('name')}:</strong> ${escapeHtml(name)}</p>
-            <p><strong>${t('visits')}:</strong> ${history.length}</p>
-            <p><strong>${t('totalDue')}:</strong> ${totalDue.toFixed(2)}</p>
-            <p><strong>${t('totalPaid')}:</strong> ${totalPaid.toFixed(2)}</p>
-            <p><strong>${t('balance')}:</strong> <span class="${balance > 0 ? 'text-red-600' : 'text-green-600'} font-bold">${balance.toFixed(2)}</span></p>`;
+            <p class="text-base modal-body-text"><strong>${t('name')}:</strong> ${escapeHtml(name)}</p>
+            <p class="text-base modal-body-text"><strong>${t('visits')}:</strong> ${history.length}</p>
+            <p class="text-base modal-body-text"><strong>${t('totalDue')}:</strong> ${totalDue.toFixed(2)}</p>
+            <p class="text-base modal-body-text"><strong>${t('totalPaid')}:</strong> ${totalPaid.toFixed(2)}</p>
+            <p class="text-base modal-body-text"><strong>${t('balance')}:</strong> <span class="${balance > 0 ? 'text-red-600' : 'text-green-600'} font-bold">${balance.toFixed(2)}</span></p>`;
 
         document.getElementById('patientVisits').innerHTML = history.map((v, i) => `
-            <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+            <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
                 <div class="flex flex-wrap justify-between gap-2 mb-2">
-                    <span class="font-bold text-slate-700">${t('visit')} ${i + 1}</span>
-                    <span class="text-sm text-slate-500">${escapeHtml(v.date || '')}</span>
+                    <span class="font-bold text-slate-700 text-base">${t('visit')} ${i + 1}</span>
+                    <span class="text-base text-slate-500">${escapeHtml(v.date || '')}</span>
                 </div>
-                <p class="text-sm"><strong>${t('procedure')}:</strong> ${escapeHtml(v.proc || '')}</p>
-                <p class="text-sm"><strong>${t('due')}:</strong> ${parseFloat(v.due || 0).toFixed(2)}
+                <p class="text-base modal-body-text"><strong>${t('procedure')}:</strong> ${escapeHtml(v.proc || '')}</p>
+                <p class="text-base modal-body-text"><strong>${t('due')}:</strong> ${parseFloat(v.due || 0).toFixed(2)}
                    &nbsp;|&nbsp; <strong>${t('paid')}:</strong> ${parseFloat(v.paid || 0).toFixed(2)}</p>
-                <p class="text-sm mb-2"><strong>${t('teeth')}:</strong> ${(v.teeth && v.teeth.length) ? v.teeth.join(', ') : t('none')}</p>
+                <p class="text-base modal-body-text mb-2"><strong>${t('teeth')}:</strong> ${(v.teeth && v.teeth.length) ? v.teeth.join(', ') : t('none')}</p>
                 ${renderMiniTeeth(v.teeth)}
             </div>`).join('');
 
@@ -1691,87 +1714,83 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         });
     }
 
-    function isSkipPhrase(text) {
-        const s = (text || '').trim().toLowerCase();
-        if (!s) return true;
-        return /^(skip|none|no|nope|nothing|empty|n\/a|na|لا|لا يوجد|بدون|تخطي|تخطى|ما في|مفيش|لا شيء|مش موجود|بدون رقم)$/i.test(s)
-            || /(skip|no phone|no number|تخطي|بدون هاتف|ما في رقم)/i.test(s);
-    }
-
-    function extractSpokenNumber(text) {
-        if (!text) return null;
-        // Western + Arabic-Indic digits
-        const normalized = String(text)
-            .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
-            .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-        const m = normalized.match(/(\d+(?:[.,]\d+)?)/);
-        if (m) return parseFloat(m[1].replace(',', '.'));
-        return null;
-    }
-
-    async function parseFieldWithGemini(field, spokenText, freeText) {
-        if (!getApiKey()) return null;
-        try {
-            let prompt;
-            if (field === 'proc' || freeText) {
-                prompt = `You clean a dental procedure description from spoken clinic notes.
-Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
-Spoken transcript (may be long/detailed):
-"""${spokenText}"""
-Return ONLY JSON:
-{"value": "clear clinical procedure description preserving clinical details", "skip": false}
-Rules:
-- Keep medical meaning; fix speech-to-text noise if obvious.
-- Do NOT invent treatments that were not said.
-- Prefer a concise but complete clinical note (1–4 sentences is fine).
-- value must be a string in the same language as the speech when possible.`;
-            } else if (field === 'name') {
-                prompt = `Extract the patient full name from speech.
-Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
-Spoken: """${spokenText}"""
-Return ONLY JSON: {"value": "name only", "skip": false}
-No titles unless part of the name.`;
-            } else {
-                prompt = `Extract field "${field}" from speech.
-Spoken: """${spokenText}"""
-Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
-            }
-            const raw = await callGemini(prompt, { json: true });
-            return parseGeminiJson(raw);
-        } catch (e) {
-            console.warn('Gemini field parse failed, using local', e);
-            return null;
+    /** Gemini-only field extraction from speech transcript (no local keyword parsing) */
+    async function interpretAnswerWithGemini(field, spokenText) {
+        if (!getApiKey()) {
+            const e = new Error(t('voiceNeedKey'));
+            e.geminiDetail = t('voiceNeedKey');
+            throw e;
         }
-    }
-
-    async function interpretAnswer(field, spokenText, numeric, freeText) {
         const trimmed = (spokenText || '').trim();
-        // Procedure free-text: never treat long speech as "skip" unless explicit skip words only
-        if (!freeText && isSkipPhrase(trimmed)) return { skip: true, value: numeric ? 0 : '' };
-        if (freeText && isSkipPhrase(trimmed) && trimmed.split(/\s+/).length <= 3) {
-            return { skip: true, value: '' };
+        if (!trimmed) return { skip: true, value: '' };
+
+        const langName = lang === 'ar' ? 'Arabic' : 'English';
+        let prompt;
+
+        if (field === 'name') {
+            prompt = `You are a dental clinic data extractor. Extract ONLY the patient full name from a speech transcript.
+Output language for the name: keep as spoken (usually ${langName}).
+Return ONLY valid JSON: {"value":"full name string","skip":false,"confidence":0.0}
+
+Rules:
+- value = person name only (no procedure, no numbers unless part of the name).
+- If the user clearly refuses / says skip / no name: {"value":"","skip":true,"confidence":1}
+- Fix obvious speech-to-text name errors when clear; do not invent a name.
+- If unclear, set the best guess and lower confidence.
+
+Few-shot examples:
+Transcript: "المريض اسمه أحمد محمد العلي"
+→ {"value":"أحمد محمد العلي","skip":false,"confidence":0.95}
+
+Transcript: "patient name is Sarah Johnson"
+→ {"value":"Sarah Johnson","skip":false,"confidence":0.95}
+
+Transcript: "تخطي" / "skip"
+→ {"value":"","skip":true,"confidence":1}
+
+Transcript: """${trimmed}"""`;
+        } else if (field === 'proc') {
+            prompt = `You are a dental clinic documentation assistant. From a speech transcript, extract a clean clinical procedure / treatment note.
+Output language: ${langName} (prefer the language of the transcript).
+Return ONLY valid JSON: {"value":"clinical procedure text","skip":false,"confidence":0.0}
+
+Rules:
+- value may be long free text (1–5 sentences). Preserve clinical details (tooth numbers if said, materials, anesthesia, etc.).
+- Clean speech-to-text noise; do NOT invent treatments that were not mentioned.
+- If user says skip / none / no procedure: skip=true and value="".
+- Do not include patient name unless it is part of the clinical note by mistake—prefer procedure only.
+
+Few-shot examples:
+Transcript: "سوينا له حشو تجميلي على السن ستاشر مع تخدير موضعي"
+→ {"value":"حشو تجميلي على السن 16 مع تخدير موضعي","skip":false,"confidence":0.9}
+
+Transcript: "we did a root canal on the lower left first molar and temporary filling"
+→ {"value":"Root canal treatment on the lower left first molar with temporary filling","skip":false,"confidence":0.9}
+
+Transcript: "خلع ضرس العقل العلوي الأيمن مع خياطة"
+→ {"value":"خلع ضرس العقل العلوي الأيمن مع خياطة","skip":false,"confidence":0.92}
+
+Transcript: """${trimmed}"""`;
+        } else {
+            prompt = `Extract dental form field "${field}" from speech.
+Return ONLY JSON: {"value": string, "skip": boolean}
+Transcript: """${trimmed}"""`;
         }
 
-        if (numeric) {
-            const n = extractSpokenNumber(trimmed);
-            if (n != null && !isNaN(n)) return { skip: false, value: n };
+        const raw = await callGemini(prompt, { json: true });
+        let data;
+        try {
+            data = parseGeminiJson(raw);
+        } catch (e) {
+            const err = new Error('Invalid JSON from Gemini: ' + String(raw).slice(0, 200));
+            err.geminiDetail = err.message;
+            throw err;
         }
 
-        // Gemini when available — especially important for long procedure text
-        const ai = await parseFieldWithGemini(field, trimmed, freeText);
-        if (ai) {
-            if (ai.skip && !freeText) return { skip: true, value: numeric ? 0 : '' };
-            if (numeric) {
-                const n = typeof ai.value === 'number' ? ai.value : extractSpokenNumber(String(ai.value));
-                return { skip: false, value: n != null && !isNaN(n) ? n : 0 };
-            }
-            if (ai.value != null && String(ai.value).trim()) {
-                return { skip: false, value: String(ai.value).trim() };
-            }
-        }
-
-        if (numeric) return { skip: false, value: 0 };
-        return { skip: false, value: trimmed };
+        if (data.skip) return { skip: true, value: field === 'proc' || field === 'name' ? '' : (data.value ?? '') };
+        const value = data.value != null ? String(data.value).trim() : '';
+        if (!value) return { skip: true, value: '' };
+        return { skip: false, value };
     }
 
     function abortRecognition() {
@@ -1806,12 +1825,18 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
     }
 
     async function beginGuidedFlow() {
+        if (!getApiKey()) {
+            setVoiceStatus(t('voiceNeedKey'), 10000);
+            document.getElementById('apiPanel').classList.remove('hidden');
+            refreshApiStatus();
+            return;
+        }
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) {
             setVoiceStatus(t('voiceUnsupported'), 8000);
             return;
         }
-        // Gemini optional for parsing — flow works with local heuristics too
+        // Gemini-only understanding of each spoken answer
         resetVoiceSessionState();
         voiceSession.active = true;
         voiceSession.stepIndex = 0;
@@ -1976,10 +2001,11 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
 
         voiceSession.phase = 'processing';
         updateVoiceButtonUI();
-        setVoiceStatus(t('voiceParsing') + ' «' + spoken + '»');
+        setVoiceStatus(t('voiceGeminiParse') + ' «' + spoken + '»');
 
         try {
-            const result = await interpretAnswer(step.field, spoken, !!step.numeric, !!step.freeText);
+            // Exclusive Gemini understanding — no local keyword parsing
+            const result = await interpretAnswerWithGemini(step.field, spoken);
             if (!voiceSession.active) return;
 
             if (result.skip && step.required) {
@@ -1991,7 +2017,7 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
             }
 
             if (result.skip) {
-                voiceSession.draft[step.field] = step.numeric ? 0 : '';
+                voiceSession.draft[step.field] = '';
                 setVoiceStatus(t('voiceSkipped') + ': ' + step.field);
             } else {
                 voiceSession.draft[step.field] = result.value;
@@ -2009,7 +2035,7 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
             }
         } catch (err) {
             console.error(err);
-            setVoiceStatus(t('apiError') + ' — ' + formatGeminiError(err), 10000);
+            setVoiceStatus(t('apiError') + ' — ' + formatGeminiError(err), 14000);
             voiceSession.phase = 'awaiting_answer';
             updateVoiceButtonUI();
         }
@@ -2045,8 +2071,11 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
                 ? ('تم حفظ سجل ' + name)
                 : ('Record saved for ' + name)
         );
-        // Open teeth picker when no teeth selected yet (always after voice)
-        openTeethModal(uid);
+        // Open teeth picker only when no teeth are selected yet
+        const idx = findIndexByUid(uid);
+        if (idx >= 0 && (!patients[idx].teeth || !patients[idx].teeth.length)) {
+            openTeethModal(uid);
+        }
     }
 
     // Prevent context menu / focus issues on long-press (mobile)
@@ -2192,41 +2221,61 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
         return lang === 'ar' ? toArabicDigits(n) : String(n);
     }
 
-    function buildMorningBriefing(appts) {
-        if (!appts.length) return t('gmNoAppts');
+    function schedulePayload(appts) {
+        return appts.map((p, i) => ({
+            index: i + 1,
+            name: p.name || '',
+            time: p._timeLabel || '',
+            dateRaw: p.date || '',
+            procedure: p.proc || '',
+            due: p.due,
+            paid: p.paid
+        }));
+    }
 
-        if (lang === 'ar') {
-            let s = 'صباح الخير، لديك اليوم ' + numSpeak(appts.length) + ' ' +
-                (appts.length === 1 ? 'موعد' : 'مواعيد') + '. ';
-            appts.forEach((p, i) => {
-                const ord = i === 0 ? 'أول مريض' : (i === appts.length - 1 && appts.length > 1 ? 'آخر مريض' : 'المريض رقم ' + numSpeak(i + 1));
-                const proc = (p.proc && String(p.proc).trim()) ? (' لإجراء ' + p.proc) : '';
-                s += ord + ' الساعة ' + p._timeLabel + ' ' + (p.name || 'مريض') + proc + '. ';
-            });
-            s += 'يمكنك سؤالي عن المواعيد بالضغط المطوّل على زر الميكروفون.';
-            return s.trim();
-        }
+    async function geminiMorningBriefing(appts) {
+        const schedule = schedulePayload(appts);
+        const prompt = `You are a warm, friendly dental clinic morning assistant speaking to the dentist.
+Language: ${lang === 'ar' ? 'Arabic (clear spoken Arabic suitable for text-to-speech)' : 'natural spoken English'}.
+Today's date: ${new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB')}.
+Appointments JSON (may be empty):
+${JSON.stringify(schedule)}
 
-        let s = 'Good morning. You have ' + appts.length + ' appointment' + (appts.length === 1 ? '' : 's') + ' today. ';
-        appts.forEach((p, i) => {
-            const ord = i === 0 ? 'First patient' : ('Patient ' + (i + 1));
-            const proc = (p.proc && String(p.proc).trim()) ? (' for ' + p.proc) : '';
-            s += ord + ' at ' + p._timeLabel + ': ' + (p.name || 'Patient') + proc + '. ';
-        });
-        s += 'Hold the microphone to ask about today’s schedule.';
-        return s.trim();
+Write a short spoken morning briefing (8–16 sentences max if many patients, fewer if few):
+1) Warm "good morning" greeting.
+2) How many appointments today.
+3) Read each appointment naturally: name + time + procedure if available.
+4) If empty list: say there are no appointments today and wish a calm day.
+5) End by inviting the dentist to ask questions by holding the mic.
+
+Rules: Plain text only, no markdown, no bullet symbols, natural speech.
+Do not invent patients not in the JSON.`;
+        return (await callGemini(prompt, { json: false })).trim();
+    }
+
+    async function geminiScheduleAnswer(question, appts, chatHistory) {
+        const schedule = schedulePayload(appts);
+        const history = (chatHistory || []).slice(-6).map(h => h.role + ': ' + h.text).join('\n');
+        const prompt = `You are a helpful dental clinic morning assistant having a spoken conversation about TODAY's schedule only.
+Language: ${lang === 'ar' ? 'Arabic for speech' : 'English for speech'}.
+Schedule JSON:
+${JSON.stringify(schedule)}
+Recent chat:
+${history || '(none)'}
+Dentist said: """${question}"""
+
+Answer in 1–4 short spoken sentences. Use ONLY the schedule data (and normal conversational courtesy).
+If asked to re-read the schedule, read names, times, procedures clearly.
+If asked about extractions/fillings/etc., scan procedure fields.
+If unknown, say so politely. No markdown. Plain speech text only.`;
+        return (await callGemini(prompt, { json: false })).trim();
     }
 
     function setGmSource(source) {
         const badge = document.getElementById('gmSourceBadge');
         if (!badge) return;
-        if (source === 'gemini') {
-            badge.textContent = t('gmSourceGemini');
-            badge.className = 'text-xs font-bold px-2 py-1 rounded-lg bg-violet-100 text-violet-800';
-        } else {
-            badge.textContent = t('gmSourceLocal');
-            badge.className = 'text-xs font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800';
-        }
+        badge.textContent = t('gmSourceGemini');
+        badge.className = 'text-sm font-bold px-2 py-1 rounded-lg bg-violet-100 text-violet-800';
     }
 
     function setGmStatus(msg) {
@@ -2265,27 +2314,51 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
     async function startGoodMorning(rereadOnly) {
         const modal = document.getElementById('gmModal');
         if (!modal) return;
+
+        if (!getApiKey()) {
+            modal.classList.remove('hidden');
+            gmState.open = true;
+            setGmStatus(t('gmNeedKey'));
+            document.getElementById('gmBriefing').textContent = t('gmNeedKey');
+            document.getElementById('apiPanel').classList.remove('hidden');
+            refreshApiStatus();
+            return;
+        }
+
         modal.classList.remove('hidden');
         gmState.open = true;
         gmState.appts = getTodayAppointments();
         gmState.nextIndex = 0;
-        setGmSource('local');
-        renderGmApptList(gmState.appts);
+        gmState.chatHistory = gmState.chatHistory || [];
         if (!rereadOnly) {
+            gmState.chatHistory = [];
             const chat = document.getElementById('gmChat');
             if (chat) chat.innerHTML = '';
         }
+        setGmSource('gemini');
+        renderGmApptList(gmState.appts);
         updateGmPttUI(false);
-        const briefing = buildMorningBriefing(gmState.appts);
-        setGmStatus(briefing);
-        setGmSource('local');
+        setGmStatus(t('gmGenerating'));
+
         try {
-            gmState.speaking = true;
-            await speakText(briefing);
-        } finally {
-            gmState.speaking = false;
+            const briefing = await geminiMorningBriefing(gmState.appts);
+            const text = briefing || t('gmNoAppts');
+            document.getElementById('gmBriefing').textContent = text;
+            setGmStatus(text);
+            setGmSource('gemini');
+            try {
+                gmState.speaking = true;
+                await speakText(text);
+            } finally {
+                gmState.speaking = false;
+            }
+            setGmStatus(t('gmAskPrompt'));
+        } catch (err) {
+            console.error(err);
+            const msg = t('apiError') + ' — ' + formatGeminiError(err);
+            setGmStatus(msg);
+            document.getElementById('gmBriefing').textContent = msg;
         }
-        setGmStatus(t('gmAskPrompt'));
     }
 
     function closeGoodMorning() {
@@ -2418,197 +2491,41 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
             return;
         }
         appendGmChat('user', q);
+        gmState.chatHistory = gmState.chatHistory || [];
+        gmState.chatHistory.push({ role: 'user', text: q });
         setGmStatus(t('gmThinking'));
+        setGmSource('gemini');
 
-        // Always try local first
-        const local = answerScheduleLocally(q, gmState.appts);
-        let answer = local.answer;
-        let source = 'local';
-
-        // Optional Gemini for unmatched / open-ended questions
-        if (!local.matched && getApiKey()) {
-            try {
-                const gem = await answerScheduleWithGemini(q, gmState.appts);
-                if (gem && gem.trim()) {
-                    answer = gem.trim();
-                    source = 'gemini';
-                }
-            } catch (e) {
-                console.warn('GM Gemini fallback failed', e);
-                if (!answer) {
-                    answer = lang === 'ar'
-                        ? 'لم أتمكن من فهم السؤال. جرّب: كم مريض اليوم؟ أو من أول مريض؟'
-                        : 'I could not understand that. Try: how many patients today? or who is first?';
-                }
-            }
+        if (!getApiKey()) {
+            setGmStatus(t('gmNeedKey'));
+            appendGmChat('assistant', t('gmNeedKey'));
+            return;
         }
 
-        if (!answer) {
-            answer = lang === 'ar'
-                ? 'لم أفهم السؤال. يمكنك السؤال عن عدد المرضى، أول مريض، التالي، أو ترتيب المواعيد.'
-                : 'I did not catch that. Ask about patient count, first patient, next, or sort by time.';
-            source = 'local';
-        }
-
-        setGmSource(source);
-        appendGmChat('assistant', answer);
-        setGmStatus(answer);
         try {
-            gmState.speaking = true;
-            await speakText(answer);
-        } finally {
-            gmState.speaking = false;
-        }
-        setGmStatus(t('gmAskPrompt'));
-    }
-
-    function answerScheduleLocally(question, appts) {
-        const q = (question || '').trim().toLowerCase();
-        const ar = lang === 'ar';
-
-        // Count
-        if (/كم|عدد|how many|count|number of/.test(q) && /مريض|موعد|patient|appointment|today|اليوم/.test(q)
-            || /كم مريض|how many patients|كم موعد/.test(q)) {
-            if (!appts.length) {
-                return { matched: true, answer: ar ? 'لا يوجد أي مريض أو موعد مسجّل لليوم.' : 'There are no patients or appointments for today.' };
+            // Refresh today's list in case data changed
+            gmState.appts = getTodayAppointments();
+            const answer = await geminiScheduleAnswer(q, gmState.appts, gmState.chatHistory);
+            const text = (answer || '').trim() || (lang === 'ar'
+                ? 'عذراً، لم أستطع تكوين إجابة. أعد صياغة السؤال.'
+                : 'Sorry, I could not form an answer. Please rephrase.');
+            gmState.chatHistory.push({ role: 'assistant', text });
+            setGmSource('gemini');
+            appendGmChat('assistant', text);
+            setGmStatus(text);
+            try {
+                gmState.speaking = true;
+                await speakText(text);
+            } finally {
+                gmState.speaking = false;
             }
-            return {
-                matched: true,
-                answer: ar
-                    ? ('اليوم لديك ' + numSpeak(appts.length) + ' ' + (appts.length === 1 ? 'مريض' : 'مرضى') + '.')
-                    : ('You have ' + appts.length + ' patient' + (appts.length === 1 ? '' : 's') + ' today.')
-            };
+            setGmStatus(t('gmAskPrompt'));
+        } catch (err) {
+            console.error(err);
+            const msg = t('apiError') + ' — ' + formatGeminiError(err);
+            setGmStatus(msg);
+            appendGmChat('assistant', msg);
         }
-
-        // Sort / list by time
-        if (/رتب|ترتيب|حسب الوقت|sort|order|list|اعرض المواعيد|قائمة/.test(q)) {
-            if (!appts.length) return { matched: true, answer: t('gmNoAppts') };
-            if (ar) {
-                let s = 'المواعيد مرتبة حسب الوقت: ';
-                appts.forEach((p, i) => {
-                    s += numSpeak(i + 1) + ') ' + (p.name || 'مريض') + ' الساعة ' + p._timeLabel +
-                        (p.proc ? ' — ' + p.proc : '') + '. ';
-                });
-                return { matched: true, answer: s.trim() };
-            }
-            let s = 'Appointments sorted by time: ';
-            appts.forEach((p, i) => {
-                s += (i + 1) + ') ' + (p.name || 'Patient') + ' at ' + p._timeLabel +
-                    (p.proc ? ' — ' + p.proc : '') + '. ';
-            });
-            return { matched: true, answer: s.trim() };
-        }
-
-        // First patient
-        if (/أول|اول|first|who is first|من يبدأ/.test(q)) {
-            if (!appts.length) return { matched: true, answer: t('gmNoAppts') };
-            const p = appts[0];
-            gmState.nextIndex = 1;
-            return {
-                matched: true,
-                answer: ar
-                    ? ('أول مريض هو ' + (p.name || 'غير معروف') + ' الساعة ' + p._timeLabel +
-                        (p.proc ? ' لإجراء ' + p.proc : '') + '.')
-                    : ('The first patient is ' + (p.name || 'unknown') + ' at ' + p._timeLabel +
-                        (p.proc ? ' for ' + p.proc : '') + '.')
-            };
-        }
-
-        // Last patient
-        if (/آخر|اخر|last|النهائي/.test(q) && /مريض|موعد|patient|appointment|اليوم|today/.test(q)) {
-            if (!appts.length) return { matched: true, answer: t('gmNoAppts') };
-            const p = appts[appts.length - 1];
-            return {
-                matched: true,
-                answer: ar
-                    ? ('آخر مريض هو ' + (p.name || 'غير معروف') + ' الساعة ' + p._timeLabel +
-                        (p.proc ? ' لإجراء ' + p.proc : '') + '.')
-                    : ('The last patient is ' + (p.name || 'unknown') + ' at ' + p._timeLabel +
-                        (p.proc ? ' for ' + p.proc : '') + '.')
-            };
-        }
-
-        // Next patient
-        if (/التال|next|بعده|بعدين|who.?s next/.test(q)) {
-            if (!appts.length) return { matched: true, answer: t('gmNoAppts') };
-            if (gmState.nextIndex >= appts.length) {
-                return {
-                    matched: true,
-                    answer: ar ? 'لا يوجد مريض تالٍ؛ انتهت قائمة اليوم.' : 'There is no next patient; today’s list is finished.'
-                };
-            }
-            const p = appts[gmState.nextIndex];
-            gmState.nextIndex++;
-            return {
-                matched: true,
-                answer: ar
-                    ? ('التالي: ' + (p.name || 'مريض') + ' الساعة ' + p._timeLabel +
-                        (p.proc ? ' — ' + p.proc : '') + '.')
-                    : ('Next: ' + (p.name || 'Patient') + ' at ' + p._timeLabel +
-                        (p.proc ? ' — ' + p.proc : '') + '.')
-            };
-        }
-
-        // When is X? / appointment for name
-        // Try match any patient name mentioned in the question
-        if (appts.length) {
-            const hit = appts.find(p => {
-                const n = (p.name || '').trim().toLowerCase();
-                if (n.length < 2) return false;
-                return q.includes(n) || n.split(/\s+/).some(part => part.length > 2 && q.includes(part));
-            });
-            if (hit && (/متى|موعد|وقت|when|time|appointment|schedule/.test(q) || q.includes((hit.name || '').toLowerCase()))) {
-                return {
-                    matched: true,
-                    answer: ar
-                        ? ('موعد ' + hit.name + ' الساعة ' + hit._timeLabel +
-                            (hit.proc ? '، الإجراء: ' + hit.proc : '') + '.')
-                        : ((hit.name) + ' is scheduled at ' + hit._timeLabel +
-                            (hit.proc ? ', procedure: ' + hit.proc : '') + '.')
-                };
-            }
-        }
-
-        // Procedure of someone / what procedure
-        if (/إجراء|اجراء|procedure|علاج|treatment/.test(q) && appts.length) {
-            const hit = appts.find(p => {
-                const n = (p.name || '').trim().toLowerCase();
-                return n && (q.includes(n) || n.split(/\s+/).some(part => part.length > 2 && q.includes(part)));
-            });
-            if (hit) {
-                return {
-                    matched: true,
-                    answer: ar
-                        ? ('إجراء ' + hit.name + ': ' + (hit.proc || 'غير محدد') + '.')
-                        : (hit.name + '’s procedure: ' + (hit.proc || 'not specified') + '.')
-                };
-            }
-        }
-
-        // Full briefing again
-        if (/صباح|good morning|brief|ملخص|اقرأ|read again|أعد/.test(q)) {
-            return { matched: true, answer: buildMorningBriefing(appts) };
-        }
-
-        return { matched: false, answer: '' };
-    }
-
-    async function answerScheduleWithGemini(question, appts) {
-        const schedule = appts.map((p, i) => ({
-            index: i + 1,
-            name: p.name,
-            time: p._timeLabel,
-            dateRaw: p.date,
-            procedure: p.proc || ''
-        }));
-        const prompt = `You are a friendly dental clinic morning assistant.
-Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
-Today's appointments JSON:
-${JSON.stringify(schedule, null, 0)}
-User question: """${question}"""
-Answer in 1–3 short spoken sentences. Use only the schedule data. If unknown, say so politely.
-No markdown. Plain text only.`;
-        return await callGemini(prompt, { json: false });
     }
 
     // Prevent long-press menu on GM PTT
