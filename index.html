@@ -199,8 +199,8 @@
                 <button id="langAr" onclick="setLang('ar')" class="px-3 py-2 text-sm font-bold bg-blue-600">عربي</button>
                 <button id="langEn" onclick="setLang('en')" class="px-3 py-2 text-sm font-bold bg-slate-700">EN</button>
             </div>
-            <button onclick="openDentalNews()" class="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
-                <i class="fa-solid fa-newspaper ml-1"></i> <span data-i18n="dentalNews">أخبار طب الأسنان</span>
+            <button onclick="startGoodMorning()" class="bg-orange-400 hover:bg-orange-500 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold">
+                <i class="fa-solid fa-sun ml-1"></i> <span data-i18n="goodMorning">صباح الخير</span>
             </button>
             <button onclick="toggleApiPanel()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold">
                 <i class="fa-solid fa-key ml-1"></i> <span data-i18n="apiSettings">مفتاح Gemini</span>
@@ -368,26 +368,46 @@
         </div>
     </div>
 
-    <!-- Dental News Modal -->
-    <div id="newsModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[55] p-4 no-print">
-        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+    <!-- Good Morning Assistant Modal -->
+    <div id="gmModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[55] p-4 no-print">
+        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900">
-                        <i class="fa-solid fa-newspaper text-sky-500 ml-2"></i>
-                        <span data-i18n="dentalNews">أخبار طب الأسنان</span>
+                        <i class="fa-solid fa-sun text-orange-400 ml-2"></i>
+                        <span data-i18n="goodMorning">صباح الخير</span>
                     </h2>
-                    <p class="text-xs text-slate-500 mt-1" data-i18n="newsSubtitle">ملخصات مهنية لأحدث التطورات في طب الأسنان (عبر Gemini)</p>
+                    <p class="text-xs text-slate-500 mt-1" data-i18n="gmHint">مساعد الصباح يقرأ مواعيد اليوم ويجيب عن أسئلتك — يعمل بدون مفتاح Gemini</p>
                 </div>
-                <div class="flex gap-2">
-                    <button type="button" onclick="loadDentalNews(true)" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl text-sm font-bold">
-                        <i class="fa-solid fa-rotate ml-1"></i><span data-i18n="newsRefresh">تحديث</span>
-                    </button>
-                    <button type="button" onclick="closeDentalNews()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-sm font-bold" data-i18n="close">إغلاق</button>
-                </div>
+                <button type="button" onclick="closeGoodMorning()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-xl text-sm font-bold" data-i18n="close">إغلاق</button>
             </div>
-            <p id="newsStatus" class="text-xs text-slate-500 mb-3"></p>
-            <div id="newsContent" class="space-y-4 text-slate-800 leading-relaxed text-sm md:text-base" dir="rtl"></div>
+
+            <div id="gmBriefing" class="mb-4 p-4 rounded-2xl bg-orange-50 border border-orange-200 text-sm text-slate-800 leading-relaxed whitespace-pre-line"></div>
+
+            <div class="mb-3 flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-600" data-i18n="gmSourceLabel">مصدر الرد:</span>
+                <span id="gmSourceBadge" class="text-xs font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800">Local</span>
+            </div>
+
+            <div id="gmChat" class="space-y-2 max-h-52 overflow-y-auto mb-4 text-sm"></div>
+
+            <p id="gmStatus" class="text-sm text-orange-800 font-medium mb-3 min-h-[1.25rem]"></p>
+
+            <div class="flex flex-wrap gap-3 items-center">
+                <button id="gmPttBtn" type="button"
+                    class="flex-1 min-w-[180px] bg-orange-500 hover:bg-orange-600 text-white px-5 py-4 rounded-2xl font-bold select-none"
+                    onmousedown="gmPttDown(event)"
+                    onmouseup="gmPttUp(event)"
+                    onmouseleave="gmPttUp(event)"
+                    ontouchstart="gmPttDown(event)"
+                    ontouchend="gmPttUp(event)"
+                    ontouchcancel="gmPttUp(event)">
+                    <i id="gmPttIcon" class="fa-solid fa-microphone ml-2"></i>
+                    <span id="gmPttLabel" data-i18n="gmHoldAsk">اضغط مطولاً واسأل عن مواعيد اليوم</span>
+                </button>
+                <button type="button" onclick="startGoodMorning(true)" class="bg-white border border-orange-300 text-orange-800 px-4 py-3 rounded-xl text-sm font-bold" data-i18n="gmReread">أعد القراءة</button>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3" data-i18n="gmExamples">مثال: كم مريض اليوم؟ · من أول مريض؟ · رتّب المواعيد · متى موعد أحمد؟</p>
         </div>
     </div>
 
@@ -519,12 +539,19 @@
             voiceEmptyAnswer: 'لم أسمع إجابة — اضغط مطولاً وحاول مرة أخرى',
             markTeethHint: '— انقر أيقونة الأسنان لتحديد الأسنان المصابة',
             aiAftercareNotice: 'سجلات المرضى تتضمن تعليمات ما بعد العلاج مولّدة بالذكاء الاصطناعي بناءً على الإجراء المسجّل.',
-            dentalNews: 'أخبار طب الأسنان',
-            newsSubtitle: 'ملخصات مهنية لأحدث التطورات في طب الأسنان (عبر Gemini)',
-            newsRefresh: 'تحديث',
-            newsLoading: 'جاري جلب أحدث أخبار طب الأسنان…',
-            newsError: 'تعذر جلب الأخبار — تحقق من مفتاح Gemini وحاول التحديث',
-            newsUpdated: 'آخر تحديث: ',
+            goodMorning: 'صباح الخير',
+            gmHint: 'مساعد الصباح يقرأ مواعيد اليوم ويجيب عن أسئلتك — يعمل بدون مفتاح Gemini',
+            gmHoldAsk: 'اضغط مطولاً واسأل عن مواعيد اليوم',
+            gmListening: '🔴 جاري الاستماع… أفلت عند الانتهاء',
+            gmThinking: 'جاري التفكير…',
+            gmReread: 'أعد القراءة',
+            gmExamples: 'مثال: كم مريض اليوم؟ · من أول مريض؟ · رتّب المواعيد · متى موعد أحمد؟',
+            gmSourceLabel: 'مصدر الرد:',
+            gmSourceLocal: 'محلي (بدون API)',
+            gmSourceGemini: 'Gemini (اختياري)',
+            gmNoAppts: 'صباح الخير! لا توجد مواعيد مسجّلة لليوم. يوم هادئ في العيادة.',
+            gmEmptyAnswer: 'لم أسمع سؤالاً — اضغط مطولاً وحاول مرة أخرى',
+            gmAskPrompt: 'اسألني عن مواعيد اليوم بالضغط المطوّل على زر الميكروفون.',
             noApiKey: 'أدخل مفتاح Gemini API أولاً (زر مفتاح Gemini أعلى الصفحة)',
             apiError: 'خطأ من Gemini API',
             exportDone: 'تم التصدير', importDone: 'تم الاستيراد', importError: 'خطأ في قراءة الملف',
@@ -603,12 +630,19 @@
             voiceEmptyAnswer: 'No answer heard — hold the button and try again',
             markTeethHint: '— click the teeth icon to mark affected teeth',
             aiAftercareNotice: 'Patient records include AI-generated aftercare instructions based on the recorded procedure.',
-            dentalNews: 'Dental News',
-            newsSubtitle: 'Professional summaries of recent dental developments (via Gemini)',
-            newsRefresh: 'Refresh',
-            newsLoading: 'Fetching the latest dental news…',
-            newsError: 'Could not load news — check your Gemini key and try refresh',
-            newsUpdated: 'Last updated: ',
+            goodMorning: 'Good Morning',
+            gmHint: 'Morning assistant reads today’s appointments and answers questions — works without a Gemini key',
+            gmHoldAsk: 'Hold and ask about today’s schedule',
+            gmListening: '🔴 Listening… release when done',
+            gmThinking: 'Thinking…',
+            gmReread: 'Read again',
+            gmExamples: 'e.g. How many patients today? · Who is first? · Sort by time · When is Ahmed?',
+            gmSourceLabel: 'Answer source:',
+            gmSourceLocal: 'Local (no API)',
+            gmSourceGemini: 'Gemini (optional)',
+            gmNoAppts: 'Good morning! There are no appointments recorded for today. A quiet clinic day.',
+            gmEmptyAnswer: 'No question heard — hold the mic and try again',
+            gmAskPrompt: 'Ask about today’s appointments by holding the microphone button.',
             noApiKey: 'Enter your Gemini API key first (Gemini Key button in the header)',
             apiError: 'Gemini API error',
             exportDone: 'Export complete', importDone: 'Import complete', importError: 'Error reading file',
@@ -2028,91 +2062,560 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
         if (btn) btn.addEventListener('contextmenu', e => e.preventDefault());
     })();
 
-    // ── Dental News (Gemini, Arabic professional summaries) ───────────
-    let newsCache = { html: '', at: 0 };
+    // ── Good Morning assistant (local-first schedule Q&A) ─────────────
+    const gmState = {
+        open: false,
+        appts: [],
+        holding: false,
+        recognition: null,
+        transcript: '',
+        pressToken: 0,
+        nextIndex: 0,
+        speaking: false
+    };
 
-    function openDentalNews() {
-        const modal = document.getElementById('newsModal');
-        if (!modal) return;
-        modal.classList.remove('hidden');
-        // Auto-load if empty or older than 30 minutes
-        if (!newsCache.html || Date.now() - newsCache.at > 30 * 60 * 1000) {
-            loadDentalNews(false);
-        } else {
-            document.getElementById('newsContent').innerHTML = newsCache.html;
-            document.getElementById('newsStatus').textContent =
-                t('newsUpdated') + new Date(newsCache.at).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB');
+    function sameCalendarDay(a, b) {
+        return a.getFullYear() === b.getFullYear()
+            && a.getMonth() === b.getMonth()
+            && a.getDate() === b.getDate();
+    }
+
+    function parsePatientDate(dateStr) {
+        if (!dateStr) return null;
+        const s = String(dateStr).trim();
+        if (!s) return null;
+
+        let d = new Date(s);
+        if (!isNaN(d.getTime())) return d;
+
+        // dd/mm/yyyy[, time] or d-m-yyyy
+        let m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[^\d]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|ص|م)?)?/i);
+        if (m) {
+            let day = parseInt(m[1], 10);
+            let month = parseInt(m[2], 10) - 1;
+            let year = parseInt(m[3], 10);
+            if (year < 100) year += 2000;
+            let hour = m[4] != null ? parseInt(m[4], 10) : 0;
+            let min = m[5] != null ? parseInt(m[5], 10) : 0;
+            const sec = m[6] != null ? parseInt(m[6], 10) : 0;
+            const ap = (m[7] || '').toLowerCase();
+            if (ap === 'pm' || ap === 'م') { if (hour < 12) hour += 12; }
+            if (ap === 'am' || ap === 'ص') { if (hour === 12) hour = 0; }
+            d = new Date(year, month, day, hour, min, sec);
+            if (!isNaN(d.getTime())) return d;
+        }
+
+        // yyyy-mm-dd
+        m = s.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2}))?/);
+        if (m) {
+            d = new Date(
+                parseInt(m[1], 10),
+                parseInt(m[2], 10) - 1,
+                parseInt(m[3], 10),
+                m[4] != null ? parseInt(m[4], 10) : 0,
+                m[5] != null ? parseInt(m[5], 10) : 0
+            );
+            if (!isNaN(d.getTime())) return d;
+        }
+        return null;
+    }
+
+    function formatTimeSpoken(d) {
+        if (!d || isNaN(d.getTime())) {
+            return lang === 'ar' ? 'وقت غير محدد' : 'time not set';
+        }
+        try {
+            return d.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
         }
     }
 
-    function closeDentalNews() {
-        document.getElementById('newsModal').classList.add('hidden');
+    function formatTimeDisplay(d, raw) {
+        if (d && !isNaN(d.getTime())) {
+            const t = formatTimeSpoken(d);
+            // If looks like date-only (00:00), show raw date string snippet
+            if (d.getHours() === 0 && d.getMinutes() === 0 && raw && !/\d{1,2}:\d{2}/.test(raw)) {
+                return lang === 'ar' ? 'اليوم' : 'today';
+            }
+            return t;
+        }
+        return raw || (lang === 'ar' ? '—' : '—');
     }
 
-    async function loadDentalNews(forceRefresh) {
-        const content = document.getElementById('newsContent');
-        const status = document.getElementById('newsStatus');
-        if (!content || !status) return;
+    function getTodayAppointments() {
+        const now = new Date();
+        const list = [];
+        patients.forEach(p => {
+            const parsed = parsePatientDate(p.date);
+            // Include if parsed day is today, OR if date string contains today's local date parts
+            let isToday = false;
+            if (parsed && sameCalendarDay(parsed, now)) isToday = true;
+            else if (!parsed && p.date) {
+                // Fallback: string includes today's day number + month number loosely
+                const day = String(now.getDate());
+                const month = String(now.getMonth() + 1);
+                const year = String(now.getFullYear());
+                const s = String(p.date);
+                if (s.includes(year) && (s.includes('/' + day) || s.includes('-' + day) || s.includes(day + '/') || s.includes(day + '-'))) {
+                    isToday = true;
+                }
+            }
+            // Also treat records created "today" via loose match of locale date
+            if (!isToday && p.date) {
+                try {
+                    const loc = now.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB');
+                    if (String(p.date).includes(loc.split(',')[0]) || String(p.date).startsWith(loc)) isToday = true;
+                } catch (e) { /* ignore */ }
+            }
+            if (!isToday) return;
+            list.push({
+                ...p,
+                _date: parsed,
+                _timeLabel: formatTimeDisplay(parsed, p.date),
+                _sort: parsed ? parsed.getTime() : Number.MAX_SAFE_INTEGER
+            });
+        });
+        list.sort((a, b) => a._sort - b._sort || String(a.name).localeCompare(String(b.name), lang === 'ar' ? 'ar' : 'en'));
+        return list;
+    }
 
-        if (!getApiKey()) {
-            status.textContent = t('noApiKey');
-            content.innerHTML = '<p class="text-red-600">' + escapeHtml(t('noApiKey')) + '</p>';
-            document.getElementById('apiPanel').classList.remove('hidden');
-            refreshApiStatus();
+    function toArabicDigits(n) {
+        const map = '٠١٢٣٤٥٦٧٨٩';
+        return String(n).replace(/\d/g, d => map[d]);
+    }
+
+    function numSpeak(n) {
+        return lang === 'ar' ? toArabicDigits(n) : String(n);
+    }
+
+    function buildMorningBriefing(appts) {
+        if (!appts.length) return t('gmNoAppts');
+
+        if (lang === 'ar') {
+            let s = 'صباح الخير، لديك اليوم ' + numSpeak(appts.length) + ' ' +
+                (appts.length === 1 ? 'موعد' : 'مواعيد') + '. ';
+            appts.forEach((p, i) => {
+                const ord = i === 0 ? 'أول مريض' : (i === appts.length - 1 && appts.length > 1 ? 'آخر مريض' : 'المريض رقم ' + numSpeak(i + 1));
+                const proc = (p.proc && String(p.proc).trim()) ? (' لإجراء ' + p.proc) : '';
+                s += ord + ' الساعة ' + p._timeLabel + ' ' + (p.name || 'مريض') + proc + '. ';
+            });
+            s += 'يمكنك سؤالي عن المواعيد بالضغط المطوّل على زر الميكروفون.';
+            return s.trim();
+        }
+
+        let s = 'Good morning. You have ' + appts.length + ' appointment' + (appts.length === 1 ? '' : 's') + ' today. ';
+        appts.forEach((p, i) => {
+            const ord = i === 0 ? 'First patient' : ('Patient ' + (i + 1));
+            const proc = (p.proc && String(p.proc).trim()) ? (' for ' + p.proc) : '';
+            s += ord + ' at ' + p._timeLabel + ': ' + (p.name || 'Patient') + proc + '. ';
+        });
+        s += 'Hold the microphone to ask about today’s schedule.';
+        return s.trim();
+    }
+
+    function setGmSource(source) {
+        const badge = document.getElementById('gmSourceBadge');
+        if (!badge) return;
+        if (source === 'gemini') {
+            badge.textContent = t('gmSourceGemini');
+            badge.className = 'text-xs font-bold px-2 py-1 rounded-lg bg-violet-100 text-violet-800';
+        } else {
+            badge.textContent = t('gmSourceLocal');
+            badge.className = 'text-xs font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800';
+        }
+    }
+
+    function setGmStatus(msg) {
+        const el = document.getElementById('gmStatus');
+        if (el) el.textContent = msg || '';
+    }
+
+    function appendGmChat(role, text) {
+        const box = document.getElementById('gmChat');
+        if (!box) return;
+        const div = document.createElement('div');
+        div.className = role === 'user'
+            ? 'p-2 rounded-xl bg-slate-100 text-slate-800'
+            : 'p-2 rounded-xl bg-orange-50 text-slate-800 border border-orange-100';
+        div.textContent = (role === 'user' ? '🧑 ' : '🌅 ') + text;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function renderGmApptList(appts) {
+        const el = document.getElementById('gmBriefing');
+        if (!el) return;
+        if (!appts.length) {
+            el.textContent = t('gmNoAppts');
             return;
         }
+        const lines = appts.map((p, i) =>
+            (i + 1) + '. ' + (p.name || '—') + ' · ' + p._timeLabel +
+            (p.proc ? ' · ' + p.proc : '')
+        );
+        el.textContent = (lang === 'ar'
+            ? ('مواعيد اليوم (' + appts.length + '):\n')
+            : ('Today’s appointments (' + appts.length + '):\n')) + lines.join('\n');
+    }
 
-        status.textContent = t('newsLoading');
-        content.innerHTML = '<p class="text-slate-500 animate-pulse">' + escapeHtml(t('newsLoading')) + '</p>';
-
+    async function startGoodMorning(rereadOnly) {
+        const modal = document.getElementById('gmModal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        gmState.open = true;
+        gmState.appts = getTodayAppointments();
+        gmState.nextIndex = 0;
+        setGmSource('local');
+        renderGmApptList(gmState.appts);
+        if (!rereadOnly) {
+            const chat = document.getElementById('gmChat');
+            if (chat) chat.innerHTML = '';
+        }
+        updateGmPttUI(false);
+        const briefing = buildMorningBriefing(gmState.appts);
+        setGmStatus(briefing);
+        setGmSource('local');
         try {
-            const today = new Date().toISOString().slice(0, 10);
-            const prompt = `أنت محرر طبي متخصص في طب الأسنان. اكتب بالعربية الفصحى المبسطة والمهنية ملخصاً لآخر أخبار وتطورات طب الأسنان.
-اليوم: ${today}.
-المطلوب:
-- 5 إلى 7 بنود إخبارية حديثة (تقنيات، علاجات، أبحاث، إرشادات صحية فموية).
-- كل بند: عنوان قصير ثم فقرة 2–4 جمل دقيقة وواضحة.
-- أسلوب مهني وواضح لعيادة أسنان.
-- لا تخترع مراجع وهمية بأرقام DOI. إن لم تكن متأكداً من خبر محدد، صِغ التوجه العلمي العام بصدق دون نسب كاذب.
-- لا مقدمات طويلة. ابدأ مباشرة بالعناوين.
-- استخدم هذا التنسيق HTML فقط (بدون markdown):
-<article class="news-item border border-slate-200 rounded-xl p-4 bg-slate-50">
-  <h3 class="font-bold text-sky-800 text-base mb-2">العنوان</h3>
-  <p class="text-slate-700 text-sm leading-relaxed">النص</p>
-</article>
-القواعد: أعد HTML للبنود فقط متتابعة، بدون html أو body.`;
+            gmState.speaking = true;
+            await speakText(briefing);
+        } finally {
+            gmState.speaking = false;
+        }
+        setGmStatus(t('gmAskPrompt'));
+    }
 
-            const raw = await callGemini(prompt, { json: false });
-            let html = (raw || '').trim()
-                .replace(/^```(?:html)?\s*/i, '')
-                .replace(/\s*```$/i, '')
-                .trim();
+    function closeGoodMorning() {
+        gmAbortRecognition();
+        stopSpeechSynth();
+        gmState.open = false;
+        gmState.holding = false;
+        gmState.speaking = false;
+        document.getElementById('gmModal').classList.add('hidden');
+        setGmStatus('');
+        updateGmPttUI(false);
+    }
 
-            // Basic sanitize: strip script tags
-            html = html.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
-            if (!html.includes('news-item') && !html.includes('<h3')) {
-                // Fallback wrap plain text paragraphs
-                const blocks = html.split(/\n{2,}/).filter(Boolean);
-                html = blocks.map(b =>
-                    '<article class="news-item border border-slate-200 rounded-xl p-4 bg-slate-50"><p class="text-slate-700 text-sm leading-relaxed">' +
-                    escapeHtml(b.replace(/<[^>]+>/g, '')) +
-                    '</p></article>'
-                ).join('');
-            }
-
-            if (!html || html.length < 40) throw new Error('Empty news response');
-
-            newsCache = { html, at: Date.now() };
-            content.innerHTML = html;
-            content.setAttribute('dir', 'rtl');
-            status.textContent = t('newsUpdated') + new Date(newsCache.at).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB');
-        } catch (err) {
-            console.error('Dental news error', err);
-            status.textContent = t('newsError') + ' — ' + formatGeminiError(err);
-            content.innerHTML = '<p class="text-red-600">' + escapeHtml(t('newsError')) + '</p><p class="text-xs text-slate-500 mt-2">' +
-                escapeHtml(formatGeminiError(err)) + '</p>';
+    function updateGmPttUI(listening) {
+        const btn = document.getElementById('gmPttBtn');
+        const label = document.getElementById('gmPttLabel');
+        const icon = document.getElementById('gmPttIcon');
+        if (!btn) return;
+        if (listening) {
+            btn.classList.add('voice-listening');
+            btn.classList.remove('bg-orange-500');
+            if (label) label.textContent = t('gmListening');
+            if (icon) icon.className = 'fa-solid fa-microphone-lines ml-2';
+        } else {
+            btn.classList.remove('voice-listening');
+            btn.classList.add('bg-orange-500');
+            if (label) label.textContent = t('gmHoldAsk');
+            if (icon) icon.className = 'fa-solid fa-microphone ml-2';
         }
     }
+
+    function gmAbortRecognition() {
+        const rec = gmState.recognition;
+        gmState.recognition = null;
+        if (!rec) return;
+        try {
+            rec.onresult = null;
+            rec.onerror = null;
+            rec.onend = null;
+            rec.stop();
+        } catch (e) {
+            try { rec.abort(); } catch (e2) { /* ignore */ }
+        }
+    }
+
+    let gmLastTouchAt = 0;
+    function gmPttDown(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        if (ev && ev.type === 'touchstart') gmLastTouchAt = Date.now();
+        if (ev && ev.type === 'mousedown' && Date.now() - gmLastTouchAt < 600) return;
+        if (ev && ev.type === 'mousedown' && ev.button !== 0) return;
+        if (!gmState.open || gmState.speaking) return;
+        if (gmState.holding) return;
+        gmStartListening();
+    }
+
+    function gmPttUp(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        if (ev && ev.type === 'touchend') gmLastTouchAt = Date.now();
+        if (ev && (ev.type === 'mouseup' || ev.type === 'mouseleave') && Date.now() - gmLastTouchAt < 600) {
+            if (!gmState.holding) return;
+        }
+        if (!gmState.holding) return;
+        gmStopListeningAndAnswer();
+    }
+
+    function gmStartListening() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            setGmStatus(t('voiceUnsupported'));
+            return;
+        }
+        stopSpeechSynth();
+        gmAbortRecognition();
+        gmState.holding = true;
+        gmState.transcript = '';
+        gmState.pressToken++;
+        const token = gmState.pressToken;
+        updateGmPttUI(true);
+        setGmStatus(t('gmListening'));
+
+        const rec = new SR();
+        gmState.recognition = rec;
+        rec.lang = speechLang();
+        rec.interimResults = true;
+        rec.continuous = true;
+        rec.maxAlternatives = 1;
+
+        rec.onresult = (e) => {
+            if (token !== gmState.pressToken) return;
+            let finalText = '';
+            let interim = '';
+            for (let i = 0; i < e.results.length; i++) {
+                if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+                else interim += e.results[i][0].transcript;
+            }
+            if (finalText) gmState.transcript = (gmState.transcript + ' ' + finalText).trim();
+            const live = (gmState.transcript + ' ' + interim).trim();
+            if (live) setGmStatus(t('gmListening') + ' «' + live + '»');
+        };
+        rec.onerror = (ev) => {
+            if (token !== gmState.pressToken) return;
+            if (ev.error === 'aborted' || ev.error === 'no-speech') return;
+            console.warn('GM speech error', ev.error);
+        };
+        rec.onend = () => {
+            if (token !== gmState.pressToken) return;
+            if (gmState.holding) {
+                try { rec.start(); } catch (e) { /* ignore */ }
+            }
+        };
+        try { rec.start(); } catch (e) {
+            gmState.holding = false;
+            updateGmPttUI(false);
+            setGmStatus(t('voiceError'));
+        }
+    }
+
+    async function gmStopListeningAndAnswer() {
+        gmState.holding = false;
+        const token = gmState.pressToken;
+        gmAbortRecognition();
+        updateGmPttUI(false);
+        await new Promise(r => setTimeout(r, 160));
+        if (token !== gmState.pressToken || !gmState.open) return;
+
+        const q = (gmState.transcript || '').trim();
+        if (!q) {
+            setGmStatus(t('gmEmptyAnswer'));
+            return;
+        }
+        appendGmChat('user', q);
+        setGmStatus(t('gmThinking'));
+
+        // Always try local first
+        const local = answerScheduleLocally(q, gmState.appts);
+        let answer = local.answer;
+        let source = 'local';
+
+        // Optional Gemini for unmatched / open-ended questions
+        if (!local.matched && getApiKey()) {
+            try {
+                const gem = await answerScheduleWithGemini(q, gmState.appts);
+                if (gem && gem.trim()) {
+                    answer = gem.trim();
+                    source = 'gemini';
+                }
+            } catch (e) {
+                console.warn('GM Gemini fallback failed', e);
+                if (!answer) {
+                    answer = lang === 'ar'
+                        ? 'لم أتمكن من فهم السؤال. جرّب: كم مريض اليوم؟ أو من أول مريض؟'
+                        : 'I could not understand that. Try: how many patients today? or who is first?';
+                }
+            }
+        }
+
+        if (!answer) {
+            answer = lang === 'ar'
+                ? 'لم أفهم السؤال. يمكنك السؤال عن عدد المرضى، أول مريض، التالي، أو ترتيب المواعيد.'
+                : 'I did not catch that. Ask about patient count, first patient, next, or sort by time.';
+            source = 'local';
+        }
+
+        setGmSource(source);
+        appendGmChat('assistant', answer);
+        setGmStatus(answer);
+        try {
+            gmState.speaking = true;
+            await speakText(answer);
+        } finally {
+            gmState.speaking = false;
+        }
+        setGmStatus(t('gmAskPrompt'));
+    }
+
+    function answerScheduleLocally(question, appts) {
+        const q = (question || '').trim().toLowerCase();
+        const ar = lang === 'ar';
+
+        // Count
+        if (/كم|عدد|how many|count|number of/.test(q) && /مريض|موعد|patient|appointment|today|اليوم/.test(q)
+            || /كم مريض|how many patients|كم موعد/.test(q)) {
+            if (!appts.length) {
+                return { matched: true, answer: ar ? 'لا يوجد أي مريض أو موعد مسجّل لليوم.' : 'There are no patients or appointments for today.' };
+            }
+            return {
+                matched: true,
+                answer: ar
+                    ? ('اليوم لديك ' + numSpeak(appts.length) + ' ' + (appts.length === 1 ? 'مريض' : 'مرضى') + '.')
+                    : ('You have ' + appts.length + ' patient' + (appts.length === 1 ? '' : 's') + ' today.')
+            };
+        }
+
+        // Sort / list by time
+        if (/رتب|ترتيب|حسب الوقت|sort|order|list|اعرض المواعيد|قائمة/.test(q)) {
+            if (!appts.length) return { matched: true, answer: t('gmNoAppts') };
+            if (ar) {
+                let s = 'المواعيد مرتبة حسب الوقت: ';
+                appts.forEach((p, i) => {
+                    s += numSpeak(i + 1) + ') ' + (p.name || 'مريض') + ' الساعة ' + p._timeLabel +
+                        (p.proc ? ' — ' + p.proc : '') + '. ';
+                });
+                return { matched: true, answer: s.trim() };
+            }
+            let s = 'Appointments sorted by time: ';
+            appts.forEach((p, i) => {
+                s += (i + 1) + ') ' + (p.name || 'Patient') + ' at ' + p._timeLabel +
+                    (p.proc ? ' — ' + p.proc : '') + '. ';
+            });
+            return { matched: true, answer: s.trim() };
+        }
+
+        // First patient
+        if (/أول|اول|first|who is first|من يبدأ/.test(q)) {
+            if (!appts.length) return { matched: true, answer: t('gmNoAppts') };
+            const p = appts[0];
+            gmState.nextIndex = 1;
+            return {
+                matched: true,
+                answer: ar
+                    ? ('أول مريض هو ' + (p.name || 'غير معروف') + ' الساعة ' + p._timeLabel +
+                        (p.proc ? ' لإجراء ' + p.proc : '') + '.')
+                    : ('The first patient is ' + (p.name || 'unknown') + ' at ' + p._timeLabel +
+                        (p.proc ? ' for ' + p.proc : '') + '.')
+            };
+        }
+
+        // Last patient
+        if (/آخر|اخر|last|النهائي/.test(q) && /مريض|موعد|patient|appointment|اليوم|today/.test(q)) {
+            if (!appts.length) return { matched: true, answer: t('gmNoAppts') };
+            const p = appts[appts.length - 1];
+            return {
+                matched: true,
+                answer: ar
+                    ? ('آخر مريض هو ' + (p.name || 'غير معروف') + ' الساعة ' + p._timeLabel +
+                        (p.proc ? ' لإجراء ' + p.proc : '') + '.')
+                    : ('The last patient is ' + (p.name || 'unknown') + ' at ' + p._timeLabel +
+                        (p.proc ? ' for ' + p.proc : '') + '.')
+            };
+        }
+
+        // Next patient
+        if (/التال|next|بعده|بعدين|who.?s next/.test(q)) {
+            if (!appts.length) return { matched: true, answer: t('gmNoAppts') };
+            if (gmState.nextIndex >= appts.length) {
+                return {
+                    matched: true,
+                    answer: ar ? 'لا يوجد مريض تالٍ؛ انتهت قائمة اليوم.' : 'There is no next patient; today’s list is finished.'
+                };
+            }
+            const p = appts[gmState.nextIndex];
+            gmState.nextIndex++;
+            return {
+                matched: true,
+                answer: ar
+                    ? ('التالي: ' + (p.name || 'مريض') + ' الساعة ' + p._timeLabel +
+                        (p.proc ? ' — ' + p.proc : '') + '.')
+                    : ('Next: ' + (p.name || 'Patient') + ' at ' + p._timeLabel +
+                        (p.proc ? ' — ' + p.proc : '') + '.')
+            };
+        }
+
+        // When is X? / appointment for name
+        // Try match any patient name mentioned in the question
+        if (appts.length) {
+            const hit = appts.find(p => {
+                const n = (p.name || '').trim().toLowerCase();
+                if (n.length < 2) return false;
+                return q.includes(n) || n.split(/\s+/).some(part => part.length > 2 && q.includes(part));
+            });
+            if (hit && (/متى|موعد|وقت|when|time|appointment|schedule/.test(q) || q.includes((hit.name || '').toLowerCase()))) {
+                return {
+                    matched: true,
+                    answer: ar
+                        ? ('موعد ' + hit.name + ' الساعة ' + hit._timeLabel +
+                            (hit.proc ? '، الإجراء: ' + hit.proc : '') + '.')
+                        : ((hit.name) + ' is scheduled at ' + hit._timeLabel +
+                            (hit.proc ? ', procedure: ' + hit.proc : '') + '.')
+                };
+            }
+        }
+
+        // Procedure of someone / what procedure
+        if (/إجراء|اجراء|procedure|علاج|treatment/.test(q) && appts.length) {
+            const hit = appts.find(p => {
+                const n = (p.name || '').trim().toLowerCase();
+                return n && (q.includes(n) || n.split(/\s+/).some(part => part.length > 2 && q.includes(part)));
+            });
+            if (hit) {
+                return {
+                    matched: true,
+                    answer: ar
+                        ? ('إجراء ' + hit.name + ': ' + (hit.proc || 'غير محدد') + '.')
+                        : (hit.name + '’s procedure: ' + (hit.proc || 'not specified') + '.')
+                };
+            }
+        }
+
+        // Full briefing again
+        if (/صباح|good morning|brief|ملخص|اقرأ|read again|أعد/.test(q)) {
+            return { matched: true, answer: buildMorningBriefing(appts) };
+        }
+
+        return { matched: false, answer: '' };
+    }
+
+    async function answerScheduleWithGemini(question, appts) {
+        const schedule = appts.map((p, i) => ({
+            index: i + 1,
+            name: p.name,
+            time: p._timeLabel,
+            dateRaw: p.date,
+            procedure: p.proc || ''
+        }));
+        const prompt = `You are a friendly dental clinic morning assistant.
+Language: ${lang === 'ar' ? 'Arabic' : 'English'}.
+Today's appointments JSON:
+${JSON.stringify(schedule, null, 0)}
+User question: """${question}"""
+Answer in 1–3 short spoken sentences. Use only the schedule data. If unknown, say so politely.
+No markdown. Plain text only.`;
+        return await callGemini(prompt, { json: false });
+    }
+
+    // Prevent long-press menu on GM PTT
+    (function bindGmPtt() {
+        const btn = document.getElementById('gmPttBtn');
+        if (btn) btn.addEventListener('contextmenu', e => e.preventDefault());
+    })();
 
     // ── CSV ───────────────────────────────────────────────────────────
     function exportCSV() {
@@ -2204,7 +2707,7 @@ Return ONLY JSON: {"value": <string or number>, "skip": <boolean>}`;
 
     document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
     document.getElementById('teethModal').addEventListener('click', e => { if (e.target.id === 'teethModal') closeTeethModal(); });
-    document.getElementById('newsModal').addEventListener('click', e => { if (e.target.id === 'newsModal') closeDentalNews(); });
+    document.getElementById('gmModal').addEventListener('click', e => { if (e.target.id === 'gmModal') closeGoodMorning(); });
 
     fillModelSelects();
     setLang(lang);
