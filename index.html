@@ -12,6 +12,33 @@
         .row-odd { background-color: #f1f5f9; }
         input:focus, select:focus { outline: 2px solid #6366f1; }
         .calc-btn:active { transform: scale(0.95); }
+        .cell-editable {
+            cursor: cell;
+            min-width: 72px;
+            max-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
+        .cell-editable:hover { background-color: #eef2ff; outline: 1px dashed #a5b4fc; }
+        .cell-editable.editing {
+            overflow: visible;
+            outline: 2px solid #6366f1;
+            background: #fff;
+            padding: 4px !important;
+        }
+        .cell-editable input.cell-input {
+            width: 100%;
+            min-width: 64px;
+            background: #fff;
+            border: none;
+            outline: none;
+            font: inherit;
+            color: inherit;
+            padding: 2px 4px;
+        }
+        .name-cell { font-weight: 700; color: #1d4ed8; }
 
         /* ── Realistic dental arch ── */
         .dental-arch {
@@ -177,10 +204,16 @@
             <p class="font-bold text-emerald-800 text-sm" data-i18n="keyLockedTitle">✓ المفتاح محفوظ ومخفي</p>
             <p id="apiStatus" class="text-xs text-emerald-700 mt-1"></p>
             <p class="text-xs text-slate-500 mt-1" data-i18n="keyHiddenNote">لأمانك لا يمكن عرض المفتاح مرة أخرى. لاستبداله أدخل مفتاحاً جديداً أو امسحه.</p>
-            <div class="flex flex-wrap gap-2 mt-3">
+            <div class="flex flex-wrap gap-2 items-end mt-3">
+                <div class="w-56">
+                    <label class="block text-xs font-bold text-emerald-800 mb-1" data-i18n="modelLabel">النموذج المجاني</label>
+                    <select id="modelSelectLocked" onchange="saveModelOnly(this.value)" class="w-full p-2 rounded-lg border border-emerald-300 bg-white text-sm"></select>
+                </div>
+                <button type="button" onclick="testGeminiConnection()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold" data-i18n="testKey">اختبار الاتصال</button>
                 <button type="button" onclick="startChangeKey()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-bold" data-i18n="changeKey">تغيير المفتاح</button>
                 <button type="button" onclick="clearApiKey()" class="bg-white border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm font-bold" data-i18n="clearKey">مسح المفتاح</button>
             </div>
+            <p id="testResult" class="text-xs mt-2 text-slate-600"></p>
         </div>
 
         <!-- Entry state: type new key (empty after save) -->
@@ -192,14 +225,9 @@
                         class="w-full p-3 rounded-xl border border-amber-300 bg-white font-mono text-sm"
                         onkeydown="if(event.key==='Enter'){event.preventDefault();saveApiSettings();}">
                 </div>
-                <div class="w-48">
+                <div class="w-56">
                     <label class="block text-xs font-bold text-amber-800 mb-1" data-i18n="modelLabel">النموذج المجاني</label>
-                    <select id="modelSelect" class="w-full p-3 rounded-xl border border-amber-300 bg-white text-sm">
-                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-                        <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
-                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                    </select>
+                    <select id="modelSelect" class="w-full p-3 rounded-xl border border-amber-300 bg-white text-sm"></select>
                 </div>
                 <button type="button" onclick="saveApiSettings()" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-bold" data-i18n="saveKey">حفظ وإخفاء</button>
                 <button type="button" id="cancelChangeBtn" onclick="cancelChangeKey()" class="hidden bg-slate-200 text-slate-800 px-4 py-3 rounded-xl text-sm font-bold" data-i18n="cancel">إلغاء</button>
@@ -221,6 +249,7 @@
         <input type="file" id="fileInput" class="hidden" accept=".csv,text/csv" onchange="importCSV(this)">
         <button onclick="document.getElementById('fileInput').click()" class="bg-slate-600 text-white px-6 py-3 rounded-xl" data-i18n="importCsv">استيراد CSV</button>
         <span id="voiceStatus" class="text-sm text-purple-700 font-medium"></span>
+        <span class="text-xs text-slate-400" data-i18n="editHint">انقر على خلية لتعديلها · Enter للحفظ · Esc للإلغاء</span>
     </div>
 
     <!-- Table -->
@@ -322,8 +351,20 @@
        Safe to share dental.html / GitHub link: your key is NOT in the code.
        Get a free key: https://aistudio.google.com/apikey
        ═══════════════════════════════════════════════════════════════════ */
-    const GEMINI_MODEL_DEFAULT = 'gemini-2.0-flash';
+    /* Free-tier friendly models (July 2026). gemini-2.0-flash shut down June 2026. */
+    const FREE_MODELS = [
+        { id: 'gemini-2.5-flash-lite', label: 'gemini-2.5-flash-lite (موصى به / recommended)' },
+        { id: 'gemini-2.5-flash', label: 'gemini-2.5-flash' },
+        { id: 'gemini-3.1-flash-lite', label: 'gemini-3.1-flash-lite' },
+        { id: 'gemini-3.5-flash', label: 'gemini-3.5-flash' },
+        { id: 'gemini-2.5-pro', label: 'gemini-2.5-pro (free, lower quota)' }
+    ];
+    const GEMINI_MODEL_DEFAULT = 'gemini-2.5-flash-lite';
     const KEY_STORAGE = 'gemini_api_key';
+    const DEPRECATED_MODELS = new Set([
+        'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash',
+        'gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro'
+    ]);
 
     function getApiKey() {
         try {
@@ -334,12 +375,29 @@
         }
     }
     function getModel() {
-        return localStorage.getItem('gemini_model') || GEMINI_MODEL_DEFAULT;
+        let m = localStorage.getItem('gemini_model') || GEMINI_MODEL_DEFAULT;
+        if (DEPRECATED_MODELS.has(m) || !FREE_MODELS.some(x => x.id === m)) {
+            m = GEMINI_MODEL_DEFAULT;
+            try { localStorage.setItem('gemini_model', m); } catch (e) {}
+        }
+        return m;
     }
     /** Last 4 chars only — never show full key in the UI */
     function keyFingerprint(key) {
         if (!key || key.length < 4) return '••••';
         return '••••' + key.slice(-4);
+    }
+
+    function fillModelSelects() {
+        const current = getModel();
+        ['modelSelect', 'modelSelectLocked'].forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            sel.innerHTML = FREE_MODELS.map(m =>
+                `<option value="${m.id}"${m.id === current ? ' selected' : ''}>${m.label}</option>`
+            ).join('');
+            sel.value = current;
+        });
     }
 
     // ── i18n ──────────────────────────────────────────────────────────
@@ -375,15 +433,20 @@
             voiceParsing: '⏳ Gemini يحلّل البيانات...',
             voiceError: 'تعذر التعرف على الصوت',
             voiceDone: 'تم حفظ الإدخال الصوتي',
+            markTeethHint: '— انقر أيقونة الأسنان لتحديد الأسنان المصابة',
             noApiKey: 'أدخل مفتاح Gemini API أولاً (زر مفتاح Gemini أعلى الصفحة)',
-            apiError: 'خطأ من Gemini API — تحقق من المفتاح والنموذج',
+            apiError: 'خطأ من Gemini API',
             exportDone: 'تم التصدير', importDone: 'تم الاستيراد', importError: 'خطأ في قراءة الملف',
-            keySaved: 'تم الحفظ ✓ المفتاح مخفي الآن ولا يظهر للآخرين',
+            keySaved: 'تم الحفظ ✓ المفتاح مخفي الآن',
             keyMissing: 'لا يوجد مفتاح محفوظ — أدخل مفتاحك المجاني أدناه',
             keyPresent: 'محفوظ في هذا المتصفح فقط · النموذج: ',
             keyCleared: 'تم مسح المفتاح من هذا المتصفح',
             clearKey: 'مسح المفتاح',
             changeKey: 'تغيير المفتاح',
+            testKey: 'اختبار الاتصال',
+            testingKey: 'جاري اختبار الاتصال بـ Gemini...',
+            testOk: '✓ الاتصال ناجح',
+            testFail: '✗ فشل الاتصال',
             keyLockedTitle: '✓ المفتاح محفوظ ومخفي',
             keyHiddenNote: 'لأمانك لا يمكن عرض المفتاح مرة أخرى. لاستبداله أدخل مفتاحاً جديداً أو امسحه.',
             shareHint: 'عند مشاركة الرابط على GitHub: كل مستخدم يُدخل مفتاحه المجاني مرة واحدة. المفتاح يُحفظ فقط في متصفّحه ولا يُرفع مع الملف.',
@@ -395,6 +458,8 @@
             apiKeyLabel: 'مفتاح API (لن يُعرض بعد الحفظ)',
             modelLabel: 'النموذج المجاني',
             saveKey: 'حفظ وإخفاء',
+            editHint: 'انقر على خلية لتعديلها · Enter للحفظ · Esc للإلغاء',
+            openCard: 'بطاقة المريض',
             adviceLoading: 'جاري إعداد تعليمات مخصصة للإجراء...',
             adviceFor: 'تعليمات مخصصة لإجراء:',
             procExtract: 'خلع', procFill: 'حشو', procClean: 'تنظيف', procExam: 'فحص'
@@ -429,15 +494,20 @@
             voiceParsing: '⏳ Gemini is parsing the data...',
             voiceError: 'Could not recognize speech',
             voiceDone: 'Voice input saved',
+            markTeethHint: '— click the teeth icon to mark affected teeth',
             noApiKey: 'Enter your Gemini API key first (Gemini Key button in the header)',
-            apiError: 'Gemini API error — check key and model',
+            apiError: 'Gemini API error',
             exportDone: 'Export complete', importDone: 'Import complete', importError: 'Error reading file',
-            keySaved: 'Saved ✓ Key is now hidden and not shown to others',
+            keySaved: 'Saved ✓ Key is now hidden',
             keyMissing: 'No key saved — paste your free key below',
             keyPresent: 'Saved in this browser only · model: ',
             keyCleared: 'Key removed from this browser',
             clearKey: 'Clear key',
             changeKey: 'Change key',
+            testKey: 'Test connection',
+            testingKey: 'Testing Gemini connection...',
+            testOk: '✓ Connection OK',
+            testFail: '✗ Connection failed',
             keyLockedTitle: '✓ Key saved and hidden',
             keyHiddenNote: 'For safety the full key is never shown again. To replace it, enter a new key or clear it.',
             shareHint: 'Sharing on GitHub: each user pastes their own free key once. It stays only in their browser and is never in the file.',
@@ -449,6 +519,8 @@
             apiKeyLabel: 'API key (hidden after save)',
             modelLabel: 'Free model',
             saveKey: 'Save & hide',
+            editHint: 'Click a cell to edit · Enter to save · Esc to cancel',
+            openCard: 'Patient card',
             adviceLoading: 'Preparing procedure-specific aftercare...',
             adviceFor: 'Tailored advice for:',
             procExtract: 'Extraction', procFill: 'Filling', procClean: 'Cleaning', procExam: 'Exam'
@@ -502,10 +574,8 @@
     }
 
     function refreshApiStatus() {
+        fillModelSelects();
         const key = getApiKey();
-        const modelEl = document.getElementById('modelSelect');
-        if (modelEl) modelEl.value = getModel();
-
         const locked = document.getElementById('keyLockedBox');
         const entry = document.getElementById('keyEntryBox');
         const missing = document.getElementById('apiKeyMissing');
@@ -539,6 +609,15 @@
         updateKeyHeaderButton();
     }
 
+    function saveModelOnly(modelId) {
+        if (!FREE_MODELS.some(m => m.id === modelId)) return;
+        localStorage.setItem('gemini_model', modelId);
+        fillModelSelects();
+        const status = document.getElementById('apiStatus');
+        const key = getApiKey();
+        if (status && key) status.textContent = t('keyPresent') + getModel() + ' · ' + keyFingerprint(key);
+    }
+
     function toggleApiPanel() {
         const panel = document.getElementById('apiPanel');
         panel.classList.toggle('hidden');
@@ -565,29 +644,46 @@
         refreshApiStatus();
     }
 
-    function saveApiSettings() {
+    async function saveApiSettings() {
         const input = document.getElementById('apiKeyInput');
-        const key = (input.value || '').trim();
-        const model = document.getElementById('modelSelect').value;
-        localStorage.setItem('gemini_model', model);
+        const key = (input.value || '').trim().replace(/\s+/g, '');
+        const modelSel = document.getElementById('modelSelect');
+        const model = (modelSel && modelSel.value) || GEMINI_MODEL_DEFAULT;
 
         if (!key) {
             alert(t('keyMissing'));
             return;
         }
-        // Basic sanity check
         if (key.length < 20) {
-            alert(lang === 'ar' ? 'المفتاح قصير جداً — تأكد من نسخه كاملاً' : 'Key looks too short — paste the full key');
+            alert(lang === 'ar'
+                ? 'المفتاح قصير جداً — انسخه كاملاً من AI Studio.'
+                : 'Key looks too short — paste the full key from AI Studio.');
             return;
+        }
+        if (!key.startsWith('AIza')) {
+            // Soft warning only — still allow save (some keys may differ)
+            console.warn('Gemini key does not start with AIza — double-check the value.');
         }
 
         localStorage.setItem(KEY_STORAGE, key);
-        // Wipe the field immediately so nobody can read it from the screen
+        localStorage.setItem('gemini_model', model);
+        // Wipe immediately — never leave key on screen
         input.value = '';
         input.type = 'password';
         changingKey = false;
         refreshApiStatus();
-        alert(t('keySaved'));
+
+        const testEl = document.getElementById('testResult');
+        if (testEl) testEl.textContent = t('testingKey');
+        try {
+            await testGeminiConnection(true);
+            if (testEl) testEl.textContent = t('keySaved') + ' · ' + t('testOk');
+        } catch (e) {
+            // key is still saved; show detailed error
+            const msg = formatGeminiError(e);
+            if (testEl) testEl.textContent = t('keySaved') + ' · ' + t('testFail') + ': ' + msg;
+            console.error(e);
+        }
     }
 
     function clearApiKey() {
@@ -596,8 +692,37 @@
         changingKey = false;
         const input = document.getElementById('apiKeyInput');
         if (input) input.value = '';
+        const testEl = document.getElementById('testResult');
+        if (testEl) testEl.textContent = '';
         refreshApiStatus();
-        alert(t('keyCleared'));
+    }
+
+    function formatGeminiError(err) {
+        if (!err) return 'Unknown error';
+        if (typeof err === 'string') return err;
+        if (err.geminiDetail) return err.geminiDetail;
+        return err.message || String(err);
+    }
+
+    async function testGeminiConnection(silent) {
+        const testEl = document.getElementById('testResult');
+        if (!getApiKey()) {
+            if (!silent) alert(t('noApiKey'));
+            throw new Error('NO_KEY');
+        }
+        if (testEl && !silent) testEl.textContent = t('testingKey');
+        try {
+            const text = await callGemini('Reply with exactly: OK', { json: false });
+            const ok = (text || '').toUpperCase().includes('OK') || (text || '').length > 0;
+            if (testEl) testEl.textContent = t('testOk') + ' · ' + getModel() + (text ? ' · «' + String(text).slice(0, 40) + '»' : '');
+            if (!ok) throw new Error('Empty model response');
+            return true;
+        } catch (e) {
+            const msg = formatGeminiError(e);
+            if (testEl) testEl.textContent = t('testFail') + ' · HTTP/Detail: ' + msg;
+            if (!silent) alert(t('testFail') + '\n' + msg);
+            throw e;
+        }
     }
 
     // ── Language ──────────────────────────────────────────────────────
@@ -813,9 +938,96 @@
         return String(s ?? '').replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     }
 
+    /** Spreadsheet-style editable cell HTML */
+    function editableCell(uid, field, value, extraClass, type) {
+        const display = (value === 0 || value) ? String(value) : '';
+        return `<td class="p-3 border cell-editable ${extraClass || ''}"
+            data-uid="${uid}" data-field="${field}" data-type="${type || 'text'}"
+            title="${escapeAttr(display)}"
+            onclick="beginCellEdit(event, this)">${escapeHtml(display)}</td>`;
+    }
+
+    let cellEditState = null; // { td, cancel }
+
+    function beginCellEdit(ev, td) {
+        if (!td || td.classList.contains('editing')) return;
+        if (ev) ev.stopPropagation();
+        // Finish any other open editor first
+        if (cellEditState && cellEditState.td !== td) {
+            commitCellEdit(true);
+        }
+        const uid = td.dataset.uid;
+        const field = td.dataset.field;
+        const type = td.dataset.type || 'text';
+        const idx = findIndexByUid(uid);
+        if (idx < 0) return;
+        const current = patients[idx][field];
+        const input = document.createElement('input');
+        input.type = type === 'number' ? 'number' : 'text';
+        input.className = 'cell-input';
+        input.value = current != null ? current : '';
+        input.setAttribute('aria-label', field);
+        td.classList.add('editing');
+        td.textContent = '';
+        td.appendChild(input);
+        input.focus();
+        input.select();
+
+        let finished = false;
+        const finish = (save) => {
+            if (finished) return;
+            finished = true;
+            cellEditState = null;
+            td.classList.remove('editing');
+            if (save) {
+                updateByUid(uid, field, input.value);
+                // name change may affect sort grouping — full re-render
+                if (field === 'name') {
+                    renderSchedule();
+                    return;
+                }
+            }
+            const i = findIndexByUid(uid);
+            const val = i >= 0 ? patients[i][field] : '';
+            const display = (val === 0 || val) ? String(val) : '';
+            td.textContent = display;
+            td.title = display;
+        };
+
+        cellEditState = { td, finish };
+        input.addEventListener('blur', () => finish(true));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                finished = true;
+                cellEditState = null;
+                td.classList.remove('editing');
+                const i = findIndexByUid(uid);
+                const val = i >= 0 ? patients[i][field] : '';
+                td.textContent = (val === 0 || val) ? String(val) : '';
+            }
+        });
+    }
+
+    function commitCellEdit(save) {
+        if (cellEditState && typeof cellEditState.finish === 'function') {
+            // If finishing another cell, force blur path carefully
+            const td = cellEditState.td;
+            const input = td && td.querySelector('input');
+            if (input) {
+                // call finish via stored closure — re-trigger by blur
+                input.blur();
+            }
+        }
+    }
+
     function renderSchedule() {
         const tbody = document.getElementById('schedule-tbody');
         if (!tbody) return;
+        cellEditState = null;
         tbody.innerHTML = '';
         const order = document.getElementById('sortOrder')?.value || 'asc';
         const sorted = [...patients].sort((a, b) => {
@@ -828,24 +1040,24 @@
             tr.className = index % 2 === 0 ? 'row-even' : 'row-odd';
             tr.innerHTML = `
                 <td class="p-3 border text-center">${p.id}</td>
-                <td class="p-3 border font-bold text-blue-700 cursor-pointer hover:underline" onclick="showCard('${escapeAttr(p.name)}')">${escapeHtml(p.name)}</td>
-                <td class="p-3 border"><input type="text" value="${escapeAttr(p.phone || '')}" onchange="updateByUid('${p.uid}', 'phone', this.value)" class="w-full bg-transparent min-w-[100px]"></td>
-                <td class="p-3 border"><input type="text" value="${escapeAttr(p.date || '')}" onchange="updateByUid('${p.uid}', 'date', this.value)" class="w-full bg-transparent min-w-[100px]"></td>
-                <td class="p-3 border"><input type="text" value="${escapeAttr(p.proc || '')}" onchange="updateByUid('${p.uid}', 'proc', this.value)" class="w-full bg-transparent min-w-[80px]"></td>
+                ${editableCell(p.uid, 'name', p.name, 'name-cell', 'text')}
+                ${editableCell(p.uid, 'phone', p.phone || '', '', 'text')}
+                ${editableCell(p.uid, 'date', p.date || '', '', 'text')}
+                ${editableCell(p.uid, 'proc', p.proc || '', '', 'text')}
                 <td class="p-3 border text-center">
                     <div class="flex flex-col items-center gap-1">
                         ${renderMiniTeeth(p.teeth)}
-                        <button onclick="openTeethModal('${p.uid}')" class="text-xs text-indigo-600 hover:underline" title="${t('selectTeeth')}">
+                        <button type="button" onclick="openTeethModal('${p.uid}')" class="text-xs text-indigo-600 hover:underline" title="${t('selectTeeth')}">
                             <i class="fa-solid fa-pen-to-square"></i>
                             ${(p.teeth && p.teeth.length) ? '<span class="text-red-600 font-bold">'+p.teeth.join(',')+'</span>' : ''}
                         </button>
                     </div>
                 </td>
-                <td class="p-3 border font-bold text-red-600"><input type="number" value="${p.due || 0}" onchange="updateByUid('${p.uid}', 'due', this.value)" class="w-full bg-transparent min-w-[70px]"></td>
-                <td class="p-3 border font-bold text-green-600"><input type="number" value="${p.paid || 0}" onchange="updateByUid('${p.uid}', 'paid', this.value)" class="w-full bg-transparent min-w-[70px]"></td>
+                ${editableCell(p.uid, 'due', p.due || 0, 'font-bold text-red-600', 'number')}
+                ${editableCell(p.uid, 'paid', p.paid || 0, 'font-bold text-green-600', 'number')}
                 <td class="p-3 border text-center whitespace-nowrap">
-                    <button onclick="showCard('${escapeAttr(p.name)}')" class="text-blue-600 mx-1" title="${t('patientRecord')}"><i class="fa-solid fa-id-card"></i></button>
-                    <button onclick="deleteByUid('${p.uid}')" class="text-red-500 mx-1"><i class="fa-solid fa-trash"></i></button>
+                    <button type="button" onclick="showCardByUid('${p.uid}')" class="text-blue-600 mx-1" title="${t('openCard')}"><i class="fa-solid fa-id-card"></i></button>
+                    <button type="button" onclick="deleteByUid('${p.uid}')" class="text-red-500 mx-1"><i class="fa-solid fa-trash"></i></button>
                 </td>`;
             tbody.appendChild(tr);
         });
@@ -857,6 +1069,12 @@
         if (field === 'due' || field === 'paid') patients[idx][field] = parseFloat(value) || 0;
         else patients[idx][field] = value;
         persist();
+    }
+
+    function showCardByUid(uid) {
+        const idx = findIndexByUid(uid);
+        if (idx < 0) return;
+        showCard(patients[idx].name);
     }
 
     function deleteByUid(uid) {
@@ -1133,36 +1351,101 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         });
         persist();
         renderSchedule();
-        openTeethModal(uid);
+        setVoiceStatus(t('voiceDone') + ': ' + name.trim() + ' ' + t('markTeethHint'), 6000);
+        // Teeth picker is manual — user clicks the teeth column icon
     }
 
     // ── Gemini API ────────────────────────────────────────────────────
+    function parseGeminiHttpError(status, errText) {
+        let detail = '';
+        try {
+            const j = JSON.parse(errText);
+            detail = j?.error?.message || j?.error?.status || errText;
+        } catch (_) {
+            detail = (errText || '').slice(0, 400);
+        }
+        const short = `HTTP ${status}` + (detail ? ': ' + detail : '');
+        return short;
+    }
+
     async function callGemini(promptText, opts) {
         const key = getApiKey();
-        if (!key) throw new Error('NO_KEY');
+        if (!key) {
+            const e = new Error('NO_KEY');
+            e.geminiDetail = t('noApiKey');
+            throw e;
+        }
         const model = getModel();
         const asJson = !opts || opts.json !== false;
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
         const generationConfig = {
             temperature: asJson ? 0.2 : 0.55
         };
         if (asJson) generationConfig.responseMimeType = 'application/json';
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: promptText }] }],
-                generationConfig
-            })
-        });
+
+        let res;
+        try {
+            res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig
+                })
+            });
+        } catch (netErr) {
+            const e = new Error(netErr.message || 'Network error');
+            e.geminiDetail = 'Network: ' + (netErr.message || String(netErr));
+            console.error('Gemini network error', netErr);
+            throw e;
+        }
+
         if (!res.ok) {
             const errText = await res.text().catch(() => '');
+            const detail = parseGeminiHttpError(res.status, errText);
             console.error('Gemini error', res.status, errText);
-            throw new Error('API_' + res.status);
+            const e = new Error(detail);
+            e.geminiDetail = detail;
+            e.status = res.status;
+            throw e;
         }
+
         const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        // Blocked / safety / empty candidates
+        if (data?.promptFeedback?.blockReason) {
+            const detail = 'Blocked: ' + data.promptFeedback.blockReason;
+            const e = new Error(detail);
+            e.geminiDetail = detail;
+            throw e;
+        }
+        const cand = data?.candidates?.[0];
+        if (!cand) {
+            const detail = 'No candidates in response: ' + JSON.stringify(data).slice(0, 300);
+            console.error(detail);
+            const e = new Error(detail);
+            e.geminiDetail = detail;
+            throw e;
+        }
+        if (cand.finishReason && cand.finishReason !== 'STOP' && !cand.content?.parts?.[0]?.text) {
+            const detail = 'finishReason=' + cand.finishReason;
+            const e = new Error(detail);
+            e.geminiDetail = detail;
+            throw e;
+        }
+        const text = cand?.content?.parts?.map(p => p.text || '').join('') || '';
         return text;
+    }
+
+    function setVoiceStatus(msg, clearMs) {
+        const status = document.getElementById('voiceStatus');
+        if (!status) return;
+        status.textContent = msg || '';
+        if (clearMs) {
+            clearTimeout(setVoiceStatus._t);
+            setVoiceStatus._t = setTimeout(() => {
+                if (status.textContent === msg) status.textContent = '';
+            }, clearMs);
+        }
     }
 
     function buildPatientPrompt(spokenText) {
@@ -1195,7 +1478,7 @@ Spoken text:
     // ── Voice → SpeechRecognition → Gemini parse ─────────────────────
     function startVoiceInput() {
         if (!getApiKey()) {
-            alert(t('noApiKey'));
+            setVoiceStatus(t('noApiKey'), 8000);
             document.getElementById('apiPanel').classList.remove('hidden');
             changingKey = false;
             refreshApiStatus();
@@ -1203,10 +1486,9 @@ Spoken text:
         }
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) {
-            alert(t('voiceUnsupported'));
+            setVoiceStatus(t('voiceUnsupported'), 8000);
             return;
         }
-        const status = document.getElementById('voiceStatus');
         const btn = document.getElementById('voiceBtn');
         const rec = new SR();
         rec.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
@@ -1214,30 +1496,30 @@ Spoken text:
         rec.maxAlternatives = 1;
         rec.continuous = false;
 
-        status.textContent = t('voiceListening');
+        setVoiceStatus(t('voiceListening'));
         btn.classList.add('animate-pulse');
         btn.disabled = true;
 
         rec.onresult = async (e) => {
             const text = e.results[0][0].transcript || '';
-            status.textContent = t('voiceParsing') + ' «' + text + '»';
+            setVoiceStatus(t('voiceParsing') + ' «' + text + '»');
             try {
                 await processVoiceWithGemini(text);
-                status.textContent = t('voiceDone');
             } catch (err) {
-                console.error(err);
-                if (err.message === 'NO_KEY') alert(t('noApiKey'));
-                else alert(t('apiError') + (err.message ? ' (' + err.message + ')' : ''));
-                status.textContent = t('apiError');
+                console.error('Voice/Gemini error', err);
+                const detail = formatGeminiError(err);
+                const msg = (err.message === 'NO_KEY' || err.geminiDetail === t('noApiKey'))
+                    ? t('noApiKey')
+                    : (t('apiError') + ' — ' + detail);
+                setVoiceStatus(msg, 12000);
             } finally {
                 btn.classList.remove('animate-pulse');
                 btn.disabled = false;
-                setTimeout(() => { status.textContent = ''; }, 4000);
             }
         };
-        rec.onerror = () => {
-            alert(t('voiceError'));
-            status.textContent = '';
+        rec.onerror = (ev) => {
+            console.error('SpeechRecognition error', ev);
+            setVoiceStatus(t('voiceError') + (ev && ev.error ? ' (' + ev.error + ')' : ''), 8000);
             btn.classList.remove('animate-pulse');
             btn.disabled = false;
         };
@@ -1276,8 +1558,10 @@ Spoken text:
         });
         persist();
         renderSchedule();
-        if (!teeth.length) openTeethModal(uid);
-        else alert(t('voiceDone') + ': ' + name + (teeth.length ? ' — FDI ' + teeth.join(', ') : ''));
+
+        // Non-blocking feedback only — no alert, no forced teeth modal
+        const teethPart = teeth.length ? (' · FDI ' + teeth.join(', ')) : (' ' + t('markTeethHint'));
+        setVoiceStatus(t('voiceDone') + ': ' + name + teethPart, 8000);
     }
 
     // ── CSV ───────────────────────────────────────────────────────────
@@ -1371,6 +1655,7 @@ Spoken text:
     document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
     document.getElementById('teethModal').addEventListener('click', e => { if (e.target.id === 'teethModal') closeTeethModal(); });
 
+    fillModelSelects();
     setLang(lang);
     refreshApiStatus();
     </script>
