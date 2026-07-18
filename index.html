@@ -77,7 +77,6 @@
             50% { transform: scale(1.04); }
         }
 
-        /* ── Realistic dental arch ── */
         .dental-arch {
             display: flex;
             flex-direction: column;
@@ -150,7 +149,6 @@
         }
         .tooth-btn.active .tooth-num { color: #b91c1c; font-weight: 800; }
 
-        /* enamel fill states via CSS variables on SVG */
         .tooth-btn .enamel { fill: url(#enamelGrad); }
         .tooth-btn.active .enamel { fill: url(#affectedGrad); }
         .tooth-btn .root { fill: #f5e6d3; }
@@ -184,7 +182,6 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <!-- Hidden SVG gradients (shared) -->
     <svg width="0" height="0" class="absolute" aria-hidden="true">
         <defs>
             <linearGradient id="enamelGrad" x1="0" y1="0" x2="0" y2="1">
@@ -200,7 +197,6 @@
         </defs>
     </svg>
 
-    <!-- Header -->
     <header class="bg-slate-900 text-white p-6 rounded-2xl mb-6 flex flex-wrap justify-between items-center gap-4 shadow-lg no-print">
         <div>
             <h1 class="text-2xl font-bold">
@@ -224,7 +220,6 @@
         </div>
     </header>
 
-    <!-- AI aftercare notice -->
     <div class="mb-6 no-print bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-2xl px-4 py-3 flex gap-3 items-start shadow-sm">
         <i class="fa-solid fa-circle-info text-indigo-500 mt-0.5 shrink-0"></i>
         <p class="text-base font-medium leading-relaxed" data-i18n="aiAftercareNotice">
@@ -232,7 +227,6 @@
         </p>
     </div>
 
-    <!-- ═══ Gemini API Key Panel (key hidden after save; per-browser only) ═══ -->
     <div id="apiPanel" class="hidden bg-amber-50 border-2 border-amber-400 p-5 rounded-2xl mb-6 shadow-sm no-print">
         <h3 class="font-bold text-amber-900 text-lg mb-2">
             <i class="fa-solid fa-robot ml-2"></i>
@@ -247,7 +241,6 @@
             <li data-i18n="step3">الصق المفتاح واضغط حفظ — سيُخفى فوراً ولن يظهر للآخرين</li>
         </ol>
 
-        <!-- Locked state: key is saved, never shown again -->
         <div id="keyLockedBox" class="hidden mb-3 p-4 bg-emerald-50 border border-emerald-300 rounded-xl">
             <p class="font-bold text-emerald-800 text-sm" data-i18n="keyLockedTitle">✓ المفتاح محفوظ ومخفي</p>
             <p id="apiStatus" class="text-xs text-emerald-700 mt-1"></p>
@@ -264,7 +257,6 @@
             <p id="testResult" class="text-xs mt-2 text-slate-600"></p>
         </div>
 
-        <!-- Entry state: type new key (empty after save) -->
         <div id="keyEntryBox">
             <div class="flex flex-wrap gap-3 items-end">
                 <div class="flex-1 min-w-[240px]">
@@ -284,20 +276,14 @@
         </div>
     </div>
 
-    <!-- Main Controls -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center no-print">
         <button onclick="addManualRow()" class="bg-indigo-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-indigo-700 text-base app-btn" data-i18n="addManual">إضافة سجل يدوي</button>
         <button id="voiceBtn" type="button"
             class="bg-purple-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-purple-700 select-none text-base app-btn"
-            title="Hold to say patient name"
-            onmousedown="voicePttDown(event)"
-            onmouseup="voicePttUp(event)"
-            onmouseleave="voicePttUp(event)"
-            ontouchstart="voicePttDown(event)"
-            ontouchend="voicePttUp(event)"
-            ontouchcancel="voicePttUp(event)">
+            title="انقر وتحدث"
+            onclick="toggleVoiceInput()">
             <i id="voiceBtnIcon" class="fa-solid fa-microphone ml-2"></i>
-            <span id="voiceBtnLabel" data-i18n="voiceHold">اضغط مطولاً وقل اسم المريض</span>
+            <span id="voiceBtnLabel" data-i18n="voiceTap">انقر وتحدث لإدخال الاسم</span>
         </button>
         <select id="sortOrder" onchange="renderSchedule()" class="p-3.5 rounded-xl border border-slate-300 text-base">
             <option value="name-asc" data-i18n="sortAsc">الاسم (أ-ي)</option>
@@ -311,7 +297,6 @@
         <span class="text-sm text-slate-500" data-i18n="editHint">انقر على خلية لتعديلها · Enter للحفظ · Esc للإلغاء</span>
     </div>
 
-    <!-- Table -->
     <div class="bg-white p-2 rounded-2xl shadow-lg border border-slate-200 overflow-x-auto mb-8 no-print">
         <table class="w-full text-right border-collapse">
             <thead class="bg-slate-100 text-slate-700 text-base">
@@ -331,7 +316,6 @@
         </table>
     </div>
 
-    <!-- Floating Calculator -->
     <div class="fixed bottom-10 left-10 z-40 no-print">
         <button onclick="document.getElementById('calc').classList.toggle('hidden')" class="bg-blue-600 text-white w-16 h-16 md:w-20 md:h-20 rounded-full shadow-2xl flex items-center justify-center text-3xl md:text-4xl hover:bg-blue-700">
             <i class="fa-solid fa-calculator"></i>
@@ -360,7 +344,6 @@
         </div>
     </div>
 
-    <!-- Patient Modal -->
     <div id="modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
             <div id="printArea">
@@ -382,7 +365,6 @@
         </div>
     </div>
 
-    <!-- Teeth Picker Modal -->
     <div id="teethModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[60] p-4 no-print">
         <div class="bg-white p-6 rounded-3xl w-full max-w-xl shadow-2xl max-h-[92vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-1" data-i18n="selectTeeth">اختر الأسنان المصابة</h3>
@@ -404,25 +386,16 @@
     </div>
 
     <script>
-    /* ═══════════════════════════════════════════════════════════════════
-       Gemini free API — each user enters their own key in the UI.
-       Key is stored ONLY in that browser's localStorage (never in this file).
-       Safe to share dental.html / GitHub link: your key is NOT in the code.
-       Get a free key: https://aistudio.google.com/apikey
-       ═══════════════════════════════════════════════════════════════════ */
-    /* Free-tier friendly models (July 2026). gemini-2.0-flash shut down June 2026. */
     const FREE_MODELS = [
-        { id: 'gemini-2.5-flash-lite', label: 'gemini-2.5-flash-lite (موصى به / recommended)' },
+        { id: 'gemini-1.5-flash', label: 'gemini-1.5-flash (موصى به / recommended)' },
+        { id: 'gemini-2.5-flash-lite', label: 'gemini-2.5-flash-lite' },
         { id: 'gemini-2.5-flash', label: 'gemini-2.5-flash' },
-        { id: 'gemini-3.1-flash-lite', label: 'gemini-3.1-flash-lite' },
-        { id: 'gemini-3.5-flash', label: 'gemini-3.5-flash' },
-        { id: 'gemini-2.5-pro', label: 'gemini-2.5-pro (free, lower quota)' }
+        { id: 'gemini-1.5-pro', label: 'gemini-1.5-pro' }
     ];
-    const GEMINI_MODEL_DEFAULT = 'gemini-2.5-flash-lite';
+    const GEMINI_MODEL_DEFAULT = 'gemini-1.5-flash';
     const KEY_STORAGE = 'gemini_api_key';
     const DEPRECATED_MODELS = new Set([
-        'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash',
-        'gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro'
+        'gemini-1.0-pro'
     ]);
 
     function getApiKey() {
@@ -441,7 +414,6 @@
         }
         return m;
     }
-    /** Last 4 chars only — never show full key in the UI */
     function keyFingerprint(key) {
         if (!key || key.length < 4) return '••••';
         return '••••' + key.slice(-4);
@@ -459,7 +431,6 @@
         });
     }
 
-    // ── i18n ──────────────────────────────────────────────────────────
     const i18n = {
         ar: {
             appTitle: 'عيادة الأسنان الذكية',
@@ -467,7 +438,8 @@
             addManual: 'إضافة سجل يدوي',
             voiceInput: 'إدخال اسم بالصوت',
             voiceHold: 'اضغط مطولاً وقل اسم المريض',
-            voiceListeningLabel: '🔴 جاري الاستماع للاسم… أفلت عند الانتهاء',
+            voiceTap: 'انقر وتحدث لإدخال الاسم',
+            voiceListeningLabel: '🔴 جاري الاستماع... انقر للإيقاف، أو توقف عن الحديث',
             voiceCancel: 'إلغاء الصوت',
             sortAsc: 'الاسم (أ-ي)',
             sortDesc: 'الاسم (ي-أ)',
@@ -493,11 +465,11 @@
             promptDue: 'المستحقات:', promptPaid: 'المدفوعات:',
             confirmDelete: 'حذف هذا السجل؟',
             voiceUnsupported: 'الإدخال الصوتي غير مدعوم. استخدم Chrome.',
-            voiceListening: '🔴 جاري الاستماع للاسم… أفلت عند الانتهاء',
+            voiceListening: '🔴 جاري الاستماع للاسم… ',
             voiceParsing: '⏳ جاري حفظ الاسم…',
             voiceError: 'تعذر التعرف على الصوت — أعد المحاولة',
             voiceDone: 'تم إضافة السجل بالاسم',
-            voiceEmptyAnswer: 'لم أسمع اسماً — اضغط مطولاً وقل اسم المريض',
+            voiceEmptyAnswer: 'لم أسمع اسماً',
             markTeethHint: '— أكمل باقي الحقول يدوياً في الجدول',
             aiAftercareNotice: 'سجلات المرضى تتضمن تعليمات ما بعد العلاج مولّدة بالذكاء الاصطناعي بناءً على الإجراء المسجّل.',
             goodMorning: 'صباح الخير',
@@ -539,7 +511,8 @@
             addManual: 'Add Manual Record',
             voiceInput: 'Voice name input',
             voiceHold: 'Hold and say patient name',
-            voiceListeningLabel: '🔴 Listening for name… release when done',
+            voiceTap: 'Tap to dictate name',
+            voiceListeningLabel: '🔴 Listening... Tap to stop or pause speaking',
             voiceCancel: 'Cancel voice',
             sortAsc: 'Name (A-Z)',
             sortDesc: 'Name (Z-A)',
@@ -565,11 +538,11 @@
             promptDue: 'Amount due:', promptPaid: 'Amount paid:',
             confirmDelete: 'Delete this record?',
             voiceUnsupported: 'Voice input not supported. Use Chrome.',
-            voiceListening: '🔴 Listening for name… release when done',
+            voiceListening: '🔴 Listening for name… ',
             voiceParsing: '⏳ Saving name…',
             voiceError: 'Could not recognize speech — try again',
             voiceDone: 'Record added with name',
-            voiceEmptyAnswer: 'No name heard — hold and say the patient name',
+            voiceEmptyAnswer: 'No name heard',
             markTeethHint: '— fill the other fields manually in the table',
             aiAftercareNotice: 'Patient records include AI-generated aftercare instructions based on the recorded procedure.',
             goodMorning: 'Good Morning',
@@ -619,7 +592,6 @@
     }));
     persist();
 
-    // FDI adult: UR 18-11, UL 21-28, LL 31-38, LR 48-41
     const UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
     const LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
@@ -639,7 +611,6 @@
         return patients.findIndex(p => p.uid === uid);
     }
 
-    // ── API settings: key hidden after save (safe for GitHub sharing) ─
     let changingKey = false;
 
     function updateKeyHeaderButton() {
@@ -649,8 +620,6 @@
         btn.className = has
             ? 'bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold'
             : 'bg-amber-500 hover:bg-amber-600 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold';
-        const label = btn.querySelector('[data-i18n="apiSettings"]');
-        // keep icon + label
     }
 
     function refreshApiStatus() {
@@ -663,7 +632,6 @@
         const cancelBtn = document.getElementById('cancelChangeBtn');
         const input = document.getElementById('apiKeyInput');
 
-        // Never put the stored key into the input
         if (input && !changingKey) input.value = '';
 
         if (key && !changingKey) {
@@ -735,19 +703,12 @@
             return;
         }
         if (key.length < 20) {
-            alert(lang === 'ar'
-                ? 'المفتاح قصير جداً — انسخه كاملاً من AI Studio.'
-                : 'Key looks too short — paste the full key from AI Studio.');
+            alert(lang === 'ar' ? 'المفتاح قصير جداً — انسخه كاملاً من AI Studio.' : 'Key looks too short — paste the full key from AI Studio.');
             return;
-        }
-        if (!key.startsWith('AIza')) {
-            // Soft warning only — still allow save (some keys may differ)
-            console.warn('Gemini key does not start with AIza — double-check the value.');
         }
 
         localStorage.setItem(KEY_STORAGE, key);
         localStorage.setItem('gemini_model', model);
-        // Wipe immediately — never leave key on screen
         input.value = '';
         input.type = 'password';
         changingKey = false;
@@ -759,7 +720,6 @@
             await testGeminiConnection(true);
             if (testEl) testEl.textContent = t('keySaved') + ' · ' + t('testOk');
         } catch (e) {
-            // key is still saved; show detailed error
             const msg = formatGeminiError(e);
             if (testEl) testEl.textContent = t('keySaved') + ' · ' + t('testFail') + ': ' + msg;
             console.error(e);
@@ -805,7 +765,6 @@
         }
     }
 
-    // ── Language ──────────────────────────────────────────────────────
     function setLang(l) {
         lang = l;
         localStorage.setItem('clinic_lang', lang);
@@ -827,12 +786,9 @@
                 if (labels[opt.value]) opt.text = labels[opt.value];
             });
         }
-        document.getElementById('langAr').className =
-            'px-3 py-2 text-sm font-bold ' + (lang === 'ar' ? 'bg-blue-600' : 'bg-slate-700');
-        document.getElementById('langEn').className =
-            'px-3 py-2 text-sm font-bold ' + (lang === 'en' ? 'bg-blue-600' : 'bg-slate-700');
+        document.getElementById('langAr').className = 'px-3 py-2 text-sm font-bold ' + (lang === 'ar' ? 'bg-blue-600' : 'bg-slate-700');
+        document.getElementById('langEn').className = 'px-3 py-2 text-sm font-bold ' + (lang === 'en' ? 'bg-blue-600' : 'bg-slate-700');
         document.title = t('appTitle');
-        // Re-apply locked-box labels that use data-i18n
         document.querySelectorAll('#apiPanel [data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (i18n[lang][key]) el.textContent = i18n[lang][key];
@@ -842,23 +798,16 @@
         if (typeof updateVoiceButtonUI === 'function') updateVoiceButtonUI();
     }
 
-    // ── Realistic tooth SVG paths (viewBox 0 0 40 56) ─────────────────
-    // type by FDI position: molar / premolar / canine / incisor
     function toothType(n) {
-        const pos = n % 10; // 1-8
+        const pos = n % 10;
         if (pos >= 6) return 'molar';
         if (pos >= 4) return 'premolar';
         if (pos === 3) return 'canine';
         return 'incisor';
     }
 
-    /** Crown-focused realistic silhouettes (anatomic look) */
     function toothSvgPaths(type, isUpper) {
-        // Paths designed for viewBox="0 0 40 56"
-        // Crown occupies top half for upper (crown down toward midline in real mouth —
-        // we draw crown toward the bite: upper teeth crown at bottom of cell, lower crown at top)
         if (type === 'molar') {
-            // Broad crown with multi-cusp top + two roots suggestion
             if (isUpper) {
                 return {
                     root: 'M12 4 C11 10,10 16,12 22 L28 22 C30 16,29 10,28 4 C24 6,16 6,12 4 Z',
@@ -891,7 +840,6 @@
             };
         }
         if (type === 'canine') {
-            // Pointed cusp
             if (isUpper) {
                 return {
                     root: 'M17 2 C16 12,15 18,17 26 L23 26 C25 18,24 12,23 2 C21 3,19 3,17 2 Z',
@@ -907,7 +855,6 @@
                 cusps: 'M14 28 L20 34 L26 28'
             };
         }
-        // incisor — flat cutting edge
         if (isUpper) {
             return {
                 root: 'M16 4 C15 12,15 18,17 26 L23 26 C25 18,25 12,24 4 C22 5,18 5,16 4 Z',
@@ -942,7 +889,6 @@
     }
 
     function renderArchHtml(selectedSet, mode) {
-        // mode: 'full' | 'mini'
         const isFull = mode === 'full';
         const cls = isFull ? 'dental-arch full' : 'dental-arch mini';
         const set = selectedSet instanceof Set ? selectedSet : new Set((selectedSet || []).map(Number));
@@ -950,8 +896,6 @@
         const upperHtml = UPPER.map(n => renderToothSvg(n, true, set.has(n), mode)).join('');
         const lowerHtml = LOWER.map(n => renderToothSvg(n, false, set.has(n), mode)).join('');
 
-        // In mini mode, disable click by using a wrapper without handlers — still use buttons but stop if mini
-        // We'll pass data-readonly for mini and handle in toggleTooth
         return `
         <div class="${cls}" data-mode="${mode}">
             ${isFull ? `<div class="arch-label">${t('upper')}</div>` : ''}
@@ -964,9 +908,7 @@
 
     function renderMiniTeeth(teethArr) {
         const set = new Set((teethArr || []).map(Number));
-        // mini: re-render without onclick side effects via temporary flag
         const html = renderArchHtml(set, 'mini');
-        // strip onclick for mini display
         return html.replace(/onclick="toggleTooth\(\d+\)"/g, 'onclick="return false"').replace(/tooth-btn/g, 'tooth-btn pointer-events-none');
     }
 
@@ -977,9 +919,6 @@
     }
 
     function toggleTooth(num) {
-        if (teethEditUid == null && !document.getElementById('teethModal').classList.contains('hidden') === false) {
-            // only when modal open
-        }
         if (document.getElementById('teethModal').classList.contains('hidden')) return;
         if (teethEditSet.has(num)) teethEditSet.delete(num);
         else teethEditSet.add(num);
@@ -1018,7 +957,6 @@
         closeTeethModal();
     }
 
-    // ── Schedule ──────────────────────────────────────────────────────
     function escapeHtml(s) {
         return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
@@ -1026,7 +964,6 @@
         return String(s ?? '').replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     }
 
-    /** Spreadsheet-style editable cell HTML */
     function editableCell(uid, field, value, extraClass, type) {
         const display = (value === 0 || value) ? String(value) : '';
         return `<td class="p-3 border cell-editable ${extraClass || ''}"
@@ -1035,12 +972,11 @@
             onclick="beginCellEdit(event, this)">${escapeHtml(display)}</td>`;
     }
 
-    let cellEditState = null; // { td, cancel }
+    let cellEditState = null;
 
     function beginCellEdit(ev, td) {
         if (!td || td.classList.contains('editing')) return;
         if (ev) ev.stopPropagation();
-        // Finish any other open editor first
         if (cellEditState && cellEditState.td !== td) {
             commitCellEdit(true);
         }
@@ -1069,7 +1005,6 @@
             td.classList.remove('editing');
             if (save) {
                 updateByUid(uid, field, input.value);
-                // name change may affect sort grouping — full re-render
                 if (field === 'name') {
                     renderSchedule();
                     return;
@@ -1102,14 +1037,54 @@
 
     function commitCellEdit(save) {
         if (cellEditState && typeof cellEditState.finish === 'function') {
-            // If finishing another cell, force blur path carefully
             const td = cellEditState.td;
             const input = td && td.querySelector('input');
             if (input) {
-                // call finish via stored closure — re-trigger by blur
                 input.blur();
             }
         }
+    }
+
+    function parsePatientDate(dateStr) {
+        if (!dateStr) return null;
+        let s = String(dateStr).trim();
+        if (!s) return null;
+
+        // --- إصلاح مشكلة الأرقام العربية ---
+        // تحويل الأرقام (٠-٩) إلى أرقام إنجليزية ليتمكن المتصفح من فرز التواريخ
+        s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+
+        let d = new Date(s);
+        if (!isNaN(d.getTime())) return d;
+
+        let m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[^\d]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|ص|م)?)?/i);
+        if (m) {
+            let day = parseInt(m[1], 10);
+            let month = parseInt(m[2], 10) - 1;
+            let year = parseInt(m[3], 10);
+            if (year < 100) year += 2000;
+            let hour = m[4] != null ? parseInt(m[4], 10) : 0;
+            let min = m[5] != null ? parseInt(m[5], 10) : 0;
+            const sec = m[6] != null ? parseInt(m[6], 10) : 0;
+            const ap = (m[7] || '').toLowerCase();
+            if (ap === 'pm' || ap === 'م') { if (hour < 12) hour += 12; }
+            if (ap === 'am' || ap === 'ص') { if (hour === 12) hour = 0; }
+            d = new Date(year, month, day, hour, min, sec);
+            if (!isNaN(d.getTime())) return d;
+        }
+
+        m = s.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2}))?/);
+        if (m) {
+            d = new Date(
+                parseInt(m[1], 10),
+                parseInt(m[2], 10) - 1,
+                parseInt(m[3], 10),
+                m[4] != null ? parseInt(m[4], 10) : 0,
+                m[5] != null ? parseInt(m[5], 10) : 0
+            );
+            if (!isNaN(d.getTime())) return d;
+        }
+        return null;
     }
 
     function renderSchedule() {
@@ -1180,7 +1155,6 @@
         renderSchedule();
     }
 
-    // ── Patient card ──────────────────────────────────────────────────
     function showCard(name) {
         const history = patients.filter(p => p.name === name);
         if (!history.length) return;
@@ -1214,14 +1188,12 @@
         labelEl.textContent = t('adviceFor') + ' ' + (last.proc || '—');
         adviceEl.textContent = t('adviceLoading');
         document.getElementById('modal').classList.remove('hidden');
-        // Async tailored advice (local variants + optional Gemini)
         fillPatientAdvice(last);
     }
 
     function closeModal() { document.getElementById('modal').classList.add('hidden'); }
     function printPatientCard() { window.print(); }
 
-    /** Map free-text procedure → category key */
     function classifyProcedure(proc) {
         const p = (proc || '').toLowerCase().trim();
         const rules = [
@@ -1245,126 +1217,27 @@
         return 'general';
     }
 
-    /** Multiple variants per procedure — pick a stable-but-varied one */
     function adviceLibrary() {
         const ar = {
             extraction: [
-                '• لا تمضمض بقوة ولا تستخدم الشفاطة لمدة 24 ساعة.\n• عض على الشاش لمدة 30–45 دقيقة؛ غيّره إذا ابتلّ كثيراً.\n• ضع كمادات باردة على الخد 10 دقائق كل ساعة في اليوم الأول.\n• تجنّب التدخين والمشروبات الساخنة والكحول 48–72 ساعة.\n• تناول طعاماً طرياً بارداً/فاتراً، ولا تُفرّش مكان الخلع اليوم الأول.\n• إن استمر النزيف الغزير أو تورم شديد أو حمى — راجع العيادة فوراً.',
-                '• اترك الجلطة الدموية في مكانها؛ لا تلمس الجرح باللسان أو الإصبع.\n• ارفع رأسك أثناء النوم الليلة الأولى.\n• مسكن حسب وصفة الطبيب (مثل باراسيتامول/إيبوبروفين إن لم يُمنع).\n• مضمضة ملحية خفيفة فقط بعد 24 ساعة (نصف ملعقة ملح في كوب ماء فاتر).\n• لا تمارس رياضة عنيفة 48 ساعة.\n• التورم قد يزيد لليوم الثاني ثم يتحسن — هذا طبيعي غالباً.',
-                '• بعد خلع ضرس العقل: انتفاخ وكدمات ممكنة لعدة أيام.\n• كمادات باردة أول 24 ساعة ثم دافئة خفيفة بعدها إن نصح الطبيب.\n• التزم بالمضاد الحيوي إن وُصف حتى النهاية.\n• تجنّب البذور والمكسرات والأرز غير المطهو جيداً أسبوعاً.\n• إن شعرت بألم حاد ينتشر للأذن بعد 3–4 أيام (ألم الجيب الجاف) اتصل بالعيادة.'
+                '• لا تمضمض بقوة ولا تستخدم الشفاطة لمدة 24 ساعة.\n• عض على الشاش لمدة 30–45 دقيقة؛ غيّره إذا ابتلّ كثيراً.\n• ضع كمادات باردة على الخد 10 دقائق كل ساعة في اليوم الأول.\n• تجنّب التدخين والمشروبات الساخنة والكحول 48–72 ساعة.\n• تناول طعاماً طرياً بارداً/فاتراً، ولا تُفرّش مكان الخلع اليوم الأول.\n• إن استمر النزيف الغزير أو تورم شديد أو حمى — راجع العيادة فوراً.'
             ],
             rootCanal: [
-                '• السن قد يبقى حساساً للمضغ واللمس عدة أيام — تجنّب المضغ عليه.\n• تناول المسكن حسب الوصفة.\n• إن وُضع حشو مؤقت لا تمضغ أشياء لزجة (علكة/توفي) حتى التاج النهائي.\n• نظّف بلطف بالفرشاة؛ تجنّب الخيط بقوة حول السن في أول يومين.\n• ألم يزداد مع تورم أو حمى → راجع العيادة.',
-                '• علاج العصب يزيل الالتهاب الداخلي لكن الالتئام يحتاج أياماً.\n• تجنّب الأطعمة الصلبة على الجانب المعالج حتى يُركَّب التاج إن لزم.\n• أكمل المضاد إن وُصف.\n• حساسية خفيفة للحرارة/البرودة قد تستمر أسبوعاً ثم تتراجع.\n• لا تؤجل جلسة التاج إن طُلبت — السن يصبح أكثر عرضة للكسر.'
+                '• السن قد يبقى حساساً للمضغ واللمس عدة أيام — تجنّب المضغ عليه.\n• تناول المسكن حسب الوصفة.\n• إن وُضع حشو مؤقت لا تمضغ أشياء لزجة (علكة/توفي) حتى التاج النهائي.\n• نظّف بلطف بالفرشاة؛ تجنّب الخيط بقوة حول السن في أول يومين.\n• ألم يزداد مع تورم أو حمى → راجع العيادة.'
             ],
             filling: [
-                '• لا تأكل على الجانب المحشو لمدة ساعتين (حتى يكتمل تصلّب الحشو).\n• حساسية خفيفة للبرودة/الحلاوة طبيعية حتى أسبوعين.\n• إن شعرت بارتفاع في العضة (السن يلامس أولاً) راجعنا لتعديل بسيط.\n• تجنّب قضم الثلج والأقلام والمكسرات الصلبة على الحشو الجديد.\n• حافظ على تنظيف ما بين الأسنان بالخيط يومياً.',
-                '• بعد الحشو التجميلي: قد تشعر بخشونة بسيطة تختفي مع الصقل أو التكيّف.\n• انتظر انتهاء التخدير قبل الأكل حتى لا تعض الخد/اللسان.\n• إن استمر الألم النابض ليلاً بعد 3 أيام — أخبر الطبيب (قد يحتاج تقييماً).\n• اغسل فمك بلطف؛ لا تستخدم غسول كحولي قوي أول يوم.'
-            ],
-            crown: [
-                '• إن كان تاجاً مؤقتاً: تجنّب الأطعمة اللزجة والقاسية والمضغ على ذلك الجانب.\n• نظّف بالفرشاة بلطف؛ اسحب الخيط للخارج من الجانب لا للأعلى بقوة.\n• حساسية خفيفة بعد التركيب شائعة أياماً.\n• إن سقط التاج المؤقت احفظه واتصل فوراً — لا تستخدم غراء منزلي.\n• بعد التاج النهائي: راقب العضة؛ أي ارتفاع يستدعي زيارة سريعة.',
-                '• انتظر زوال التخدير قبل الأكل.\n• استخدم معجون للأسنان الحساسة إن لزم.\n• لا تقضم أظافرك أو افتح أغلفة بأسنانك.\n• تنظيف يومي جيد حول حافة التاج يمنع التهاب اللثة.'
-            ],
-            bridge: [
-                '• نظّف تحت الجسر بخيط خاص (Superfloss) أو فرشاة بين الأسنان يومياً.\n• تجنّب قضم الأشياء الصلبة جداً بالجسر.\n• احمرار أو نزيف لثوي مستمر عند الدعامات → راجع التقييم.\n• التزم بمواعيد المتابعة.'
-            ],
-            implant: [
-                '• أول 48 ساعة: كمادات باردة، رأس مرتفع، طعام طري بارد/فاتر.\n• لا تمضمض بقوة ولا تستخدم الشفاطة ولا تدخن (التدخين يعيق الالتئام).\n• نظّف المنطقة بلطف حسب تعليمات الجراح؛ غسول مطهر إن وُصف.\n• تورم وكدمات متوقعة عدة أيام.\n• ألم شديد مفاجئ أو إفراز قيحي أو حمى → اتصل فوراً.\n• التزم بفترة عدم التحميل على الغرسة حتى يسمح الطبيب.',
-                '• بعد زراعة الزرعة: تجنّب الرياضة العنيفة أسبوعاً.\n• نم على الجانب الآخر إن أمكن.\n• أكمل المضاد والمسكن حسب الجدول.\n• لا تلمس موقع الجراحة بلسانك باستمرار.'
-            ],
-            cleaning: [
-                '• قد تشعر بحساسية للحرارة/البرودة 24–48 ساعة — طبيعية بعد إزالة الجير.\n• قد تنزف اللثة خفيفاً يوم التنظيف ثم يتحسن مع التنظيف المنزلي.\n• استخدم فرشاة ناعمة ومعجون حساسية إن لزم.\n• تجنّب التدخين والأطعمة الملونة جداً يومك هذا إن أجريت تلميعاً.\n• كرّر التنظيف الدوري كل 6 أشهر أو حسب نصيحة الطبيب.',
-                '• اشرب ماءً كثيراً؛ تجنّب المشروبات شديدة السخونة أول ساعات.\n• استخدم الخيط يومياً لمنع عودة الجير سريعاً.\n• إن استمر النزيف أكثر من 3 أيام أو ألم شديد — راجع العيادة.'
-            ],
-            whitening: [
-                '• تجنّب 48 ساعة: القهوة، الشاي، المشروبات الغازية الملونة، التوت، الكاري، والتدخين.\n• حساسية مؤقتة شائعة — معجون للأسنان الحساسة وغسول فلورايد يساعدان.\n• لا تكرر التبييض المنزلي بجرعات أعلى من الموصوفة.\n• اشرب بقشّة إن تناولت مشروباً ملوناً بعد انتهاء فترة الحذر.'
-            ],
-            braces: [
-                '• بعد الشد: ألم خفيف 2–3 أيام — طعام طري ومسكن مناسب.\n• استخدم الشمع على السلك إن جرح الخد.\n• تجنّب السكاكر اللزجة والمكسرات الصلبة والثلج.\n• فرّش بعد كل وجبة واستخدم فرشاة بين الأسنان.\n• إن انكسر سلك أو انخلع حاصرة اتصل بالعيادة.',
-                '• حافظ على نظافة ممتازة حول الحاصرات لتجنب بقع بيضاء.\n• واظب على المواعيد؛ إهمال المطاّطة يطيل العلاج.'
-            ],
-            gum: [
-                '• التزم بتنظيف لطيف مرتين يومياً وخيط يومي رغم حساسية اللثة.\n• غسول مطهر/كلورهيكسيدين إن وُصف — لا تستخدمه أطول من المدة المحددة.\n• تجنّب التدخين؛ يقلل شفاء اللثة.\n• طعام طري إذا كانت اللثة متورمة.\n• أعد التقييم إن استمر النزيف بعد أسبوع من الالتزام.',
-                '• بعد كحت اللثة: حساسية وحركة طفيفة للأسنان قد تُلاحظ مؤقتاً.\n• مضمضة ملحية فاترة بعد 24 ساعة.\n• لا توقف التنظيف خوفاً من النزيف — النعومة أهم من التوقف.'
-            ],
-            abscess: [
-                '• أكمل المضاد الحيوي بالكامل حتى مع تحسّن الألم.\n• كمادات دافئة خارجية إن نصح الطبيب (لا ساخنة جداً).\n• لا تضغط على الخراج أو تحاول تفجيره.\n• طعام طري ومسكن حسب الوصفة.\n• راجع فوراً إن امتد التورم للعين/الرقبة أو صعوبة بلع/تنفس.'
-            ],
-            veneer: [
-                '• 48 ساعة الأولى: تجنّب الملونات القوية والعض على أشياء صلبة.\n• لا تقضم أظافراً أو أقلاماً.\n• فرشاة ناعمة وخيط يومي عند الحواف.\n• إن تحركت قشرة أو شعرت بحافة حادة راجع فوراً.'
-            ],
-            denture: [
-                '• الأيام الأولى: صعوبة كلام ومضغ طبيعية — تمرّن بالقراءة بصوت عالٍ.\n• ابدأ بطعام طري مقطّع صغير.\n• انزع الطقم ليلاً ونظّفه بفرشاة خاصة ومحلول مناسب (لا ماء مغلي).\n• نقاط ضغط مؤلمة شائعة — لا تحتملها؛ راجع لتعديل الطقم.\n• احتفظ بالطقم في ماء عند خلعه.'
-            ],
-            sealant: [
-                '• يمكنك الأكل عادة بعد انتهاء الجلسة مباشرة.\n• تجنّب قضم الثلج والأشياء الصلبة جداً على الأضراس المحمية.\n• الفرشاة والخيط كالمعتاد.\n• مراجعة دورية للتأكد من بقاء الواقي.'
-            ],
-            exam: [
-                '• التزم بخطة العلاج والمواعيد المقترحة.\n• فرشاة مرتين يومياً بمعجون فلورايد وخيط مرة يومياً.\n• قلّل السكريات المتكررة بين الوجبات.\n• إن ظهر ألم مفاجئ أو تورم قبل الموعد القادم — اتصل بالعيادة.'
+                '• لا تأكل على الجانب المحشو لمدة ساعتين (حتى يكتمل تصلّب الحشو).\n• حساسية خفيفة للبرودة/الحلاوة طبيعية حتى أسبوعين.\n• إن شعرت بارتفاع في العضة (السن يلامس أولاً) راجعنا لتعديل بسيط.\n• تجنّب قضم الثلج والأقلام والمكسرات الصلبة على الحشو الجديد.\n• حافظ على تنظيف ما بين الأسنان بالخيط يومياً.'
             ],
             general: [
-                '• حافظ على نظافة الفم: فرشاة ناعمة دقيقتين مرتين يومياً وخيط يومي.\n• تجنّب التدخين والأطعمة الصلبة جداً يوم الإجراء.\n• تناول المسكن فقط حسب الإرشاد.\n• أي نزيف غزير، تورم متزايد، حمى، أو صعوبة بلع/تنفس → طوارئ/عيادة فوراً.\n• التزم بجلسة المتابعة.',
-                '• اشرب ماءً كافياً وفضّل طعاماً طرياً فاتراً أول يوم.\n• لا تستخدم غسولاً كحولياً قوياً إن كان هناك جرح.\n• سجّل أي أعراض غير معتادة وأبلغ الطبيب في المراجعة.'
+                '• حافظ على نظافة الفم: فرشاة ناعمة دقيقتين مرتين يومياً وخيط يومي.\n• تجنّب التدخين والأطعمة الصلبة جداً يوم الإجراء.\n• تناول المسكن فقط حسب الإرشاد.\n• أي نزيف غزير، تورم متزايد، حمى، أو صعوبة بلع/تنفس → طوارئ/عيادة فوراً.\n• التزم بجلسة المتابعة.'
             ]
         };
         const en = {
             extraction: [
-                '• Do not rinse hard or use a straw for 24 hours.\n• Bite on gauze 30–45 minutes; replace if soaked.\n• Cold compress on the cheek 10 minutes each hour on day 1.\n• Avoid smoking, hot drinks, and alcohol 48–72 hours.\n• Soft cool/lukewarm foods; do not brush the socket on day 1.\n• Heavy bleeding, severe swelling, or fever → contact the clinic.',
-                '• Protect the blood clot; do not poke the site with tongue or finger.\n• Sleep with head elevated the first night.\n• Pain relief as prescribed (e.g. paracetamol/ibuprofen if allowed).\n• Gentle salt-water rinse only after 24 hours.\n• No heavy exercise for 48 hours.\n• Swelling often peaks on day 2 — usually normal.',
-                '• After wisdom-tooth removal: swelling/bruising can last several days.\n• Cold packs first 24h, then warm if advised.\n• Finish any antibiotic course.\n• Avoid seeds, nuts, and hard rice for a week.\n• Sharp ear-radiating pain after day 3–4 may be dry socket — call us.'
-            ],
-            rootCanal: [
-                '• Tooth may stay tender to bite for several days — avoid chewing on it.\n• Take pain relief as directed.\n• If a temporary filling is placed, avoid sticky foods until the final crown.\n• Brush gently; floss carefully for 48 hours.\n• Worsening pain with swelling or fever → return to clinic.',
-                '• Root canal clears internal infection; healing still takes days.\n• Avoid hard foods on that side until crowned if recommended.\n• Complete antibiotics if prescribed.\n• Mild thermal sensitivity can last about a week.\n• Do not delay the crown appointment — the tooth can fracture.'
-            ],
-            filling: [
-                '• Do not eat on the filled side for 2 hours (until set).\n• Mild cold/sweet sensitivity is common up to 2 weeks.\n• If the bite feels high, come for a quick adjustment.\n• Avoid ice, pens, and hard nuts on the new filling.\n• Floss daily around the tooth.',
-                '• After composite: slight roughness often settles or can be polished.\n• Wait until numbness wears off before eating.\n• Throbbing night pain beyond 3 days needs review.\n• Gentle rinsing; avoid strong alcohol mouthwash day 1.'
-            ],
-            crown: [
-                '• Temporary crown: avoid sticky/hard foods and chewing on that side.\n• Brush gently; slide floss out sideways, not straight up.\n• Mild sensitivity after cementation is common for a few days.\n• If a temporary comes off, keep it and call — never use household glue.\n• Final crown: report a high bite promptly.',
-                '• Wait for anesthesia to wear off before eating.\n• Sensitivity toothpaste if needed.\n• No nail-biting or packet-opening with teeth.\n• Clean well at the crown margin to prevent gum inflammation.'
-            ],
-            bridge: [
-                '• Clean under the bridge daily with super-floss or interdental brushes.\n• Avoid biting very hard objects with the bridge.\n• Ongoing gum bleeding at abutments → review.\n• Keep follow-up visits.'
-            ],
-            implant: [
-                '• First 48h: cold packs, elevated head, soft cool foods.\n• No forceful rinsing, straws, or smoking (smoking harms healing).\n• Clean gently as the surgeon instructed; use prescribed rinse.\n• Swelling/bruising expected for several days.\n• Sudden severe pain, pus, or fever → call immediately.\n• Do not load the implant until cleared.',
-                '• Avoid intense sport for a week.\n• Sleep on the opposite side if possible.\n• Take antibiotics/painkillers on schedule.\n• Avoid constant tongue probing of the site.'
-            ],
-            cleaning: [
-                '• Hot/cold sensitivity 24–48h is common after scaling.\n• Light gum bleeding on the day often improves with home care.\n• Soft brush; sensitivity toothpaste if needed.\n• Avoid smoking and heavy staining foods if polished today.\n• Maintain 6-monthly cleans or as advised.',
-                '• Drink water; avoid very hot drinks for a few hours.\n• Daily floss slows tartar return.\n• Bleeding beyond 3 days or severe pain → clinic review.'
-            ],
-            whitening: [
-                '• For 48h avoid coffee, tea, dark sodas, berries, curry, and smoking.\n• Temporary sensitivity is common — use sensitivity toothpaste/fluoride rinse.\n• Do not overuse home trays beyond instructions.\n• Use a straw for colored drinks after the caution period.'
-            ],
-            braces: [
-                '• After tightening: soreness 2–3 days — soft food and suitable pain relief.\n• Orthodontic wax on wires that rub.\n• Avoid sticky sweets, hard nuts, and ice.\n• Brush after every meal; use interdental brushes.\n• Broken wire or loose bracket → call the clinic.',
-                '• Excellent hygiene around brackets prevents white spots.\n• Wear elastics as prescribed; missed wear lengthens treatment.'
-            ],
-            gum: [
-                '• Gentle brushing twice daily and daily floss despite tenderness.\n• Antiseptic/chlorhexidine rinse only for the prescribed duration.\n• No smoking — it delays gum healing.\n• Soft diet if gums are swollen.\n• Reassess if bleeding continues after a week of good care.',
-                '• After deep cleaning: temporary sensitivity or slight tooth mobility can occur.\n• Warm salt rinses after 24h.\n• Do not stop cleaning because of bleeding — be gentle instead.'
-            ],
-            abscess: [
-                '• Finish the full antibiotic course even if pain improves.\n• External warm compress only if advised.\n• Do not squeeze or self-lance the swelling.\n• Soft diet and prescribed pain relief.\n• Swelling spreading to eye/neck or trouble swallowing/breathing → urgent care.'
-            ],
-            veneer: [
-                '• First 48h: avoid strong stains and biting hard objects.\n• No nail or pen biting.\n• Soft brush and daily floss at the margins.\n• Loose veneer or sharp edge → return promptly.'
-            ],
-            denture: [
-                '• Early days: speech/chewing feel odd — practice reading aloud.\n• Start with soft, small-cut foods.\n• Leave dentures out at night; clean with a denture brush (never boiling water).\n• Sore pressure spots are common — return for adjustment, don’t endure them.\n• Store dentures in water when out of the mouth.'
-            ],
-            sealant: [
-                '• You can usually eat right after the visit.\n• Avoid chewing ice and very hard items on sealed molars.\n• Brush and floss as normal.\n• Periodic checks confirm sealants are intact.'
-            ],
-            exam: [
-                '• Follow the proposed treatment plan and appointments.\n• Brush twice daily with fluoride toothpaste; floss once daily.\n• Cut frequent sugary snacks between meals.\n• Sudden pain or swelling before the next visit → call the clinic.'
+                '• Do not rinse hard or use a straw for 24 hours.\n• Bite on gauze 30–45 minutes; replace if soaked.\n• Cold compress on the cheek 10 minutes each hour on day 1.\n• Avoid smoking, hot drinks, and alcohol 48–72 hours.\n• Soft cool/lukewarm foods; do not brush the socket on day 1.\n• Heavy bleeding, severe swelling, or fever → contact the clinic.'
             ],
             general: [
-                '• Soft brush 2 minutes twice daily and daily floss.\n• Avoid smoking and very hard foods on treatment day.\n• Pain relief only as directed.\n• Heavy bleeding, rising swelling, fever, or breathing/swallowing trouble → urgent care.\n• Keep your review appointment.',
-                '• Stay hydrated; prefer soft lukewarm food day 1.\n• Avoid strong alcohol mouthwash if there is a wound.\n• Note unusual symptoms and report them at review.'
+                '• Soft brush 2 minutes twice daily and daily floss.\n• Avoid smoking and very hard foods on treatment day.\n• Pain relief only as directed.\n• Heavy bleeding, rising swelling, fever, or breathing/swallowing trouble → urgent care.\n• Keep your review appointment.'
             ]
         };
         return lang === 'ar' ? ar : en;
@@ -1372,7 +1245,6 @@
 
     function pickVariant(list, salt) {
         if (!list || !list.length) return '';
-        // Vary by procedure text + day so same patient can see different tips over time
         const day = new Date().toDateString();
         let h = 0;
         const s = String(salt) + '|' + day;
@@ -1402,7 +1274,6 @@
         const local = getLocalAdvice(visit.proc, visit.teeth);
         el.textContent = local;
 
-        // If Gemini key exists, enrich with procedure-specific AI advice
         if (!getApiKey()) return;
         try {
             const teethStr = (visit.teeth && visit.teeth.length) ? visit.teeth.join(', ') : (lang === 'ar' ? 'غير محدد' : 'not specified');
@@ -1448,10 +1319,8 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         persist();
         renderSchedule();
         setVoiceStatus(t('voiceDone') + ': ' + name.trim() + ' ' + t('markTeethHint'), 6000);
-        // Teeth picker is manual — user clicks the teeth column icon
     }
 
-    // ── Gemini API ────────────────────────────────────────────────────
     function parseGeminiHttpError(status, errText) {
         let detail = '';
         try {
@@ -1507,7 +1376,6 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         }
 
         const data = await res.json();
-        // Blocked / safety / empty candidates
         if (data?.promptFeedback?.blockReason) {
             const detail = 'Blocked: ' + data.promptFeedback.blockReason;
             const e = new Error(detail);
@@ -1546,16 +1414,7 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         }
     }
 
-    function parseGeminiJson(raw) {
-        let s = (raw || '').trim();
-        s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-        const start = s.indexOf('{');
-        const end = s.lastIndexOf('}');
-        if (start >= 0 && end > start) s = s.slice(start, end + 1);
-        return JSON.parse(s);
-    }
-
-    // ── Simple name-only voice input (push-to-talk) ─────────────────
+    // --- إصلاح مشكلة الإدخال الصوتي (النقر للبدء/الإيقاف) ---
     const voiceState = {
         holding: false,
         recognition: null,
@@ -1584,7 +1443,7 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
             if (icon) icon.className = 'fa-solid fa-spinner fa-spin ml-2';
         } else {
             btn.classList.add('bg-purple-600');
-            label.textContent = t('voiceHold');
+            label.textContent = t('voiceTap');
             if (icon) icon.className = 'fa-solid fa-microphone ml-2';
         }
     }
@@ -1592,7 +1451,7 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
     function stopSpeechSynth() {
         try {
             if (window.speechSynthesis) window.speechSynthesis.cancel();
-        } catch (e) { /* ignore */ }
+        } catch (e) { }
     }
 
     function speakText(text) {
@@ -1635,29 +1494,16 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
             rec.onend = null;
             rec.stop();
         } catch (e) {
-            try { rec.abort(); } catch (e2) { /* ignore */ }
+            try { rec.abort(); } catch (e2) { }
         }
     }
 
-    let lastTouchPttAt = 0;
-
-    function voicePttDown(ev) {
-        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-        if (ev && ev.type === 'touchstart') lastTouchPttAt = Date.now();
-        if (ev && ev.type === 'mousedown' && Date.now() - lastTouchPttAt < 600) return;
-        if (ev && ev.type === 'mousedown' && ev.button !== 0) return;
-        if (voiceState.holding || voiceState.processing) return;
-        startNameListening();
-    }
-
-    function voicePttUp(ev) {
-        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-        if (ev && ev.type === 'touchend') lastTouchPttAt = Date.now();
-        if (ev && (ev.type === 'mouseup' || ev.type === 'mouseleave') && Date.now() - lastTouchPttAt < 600) {
-            if (!voiceState.holding) return;
+    function toggleVoiceInput() {
+        if (voiceState.holding || voiceState.processing) {
+            stopNameListeningAndSave();
+        } else {
+            startNameListening();
         }
-        if (!voiceState.holding) return;
-        stopNameListeningAndSave();
     }
 
     function startNameListening() {
@@ -1678,7 +1524,7 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         voiceState.recognition = rec;
         rec.lang = speechLang();
         rec.interimResults = true;
-        rec.continuous = true;
+        rec.continuous = false; // يقف التسجيل تلقائيا عند التوقف عن الكلام
         rec.maxAlternatives = 1;
 
         rec.onresult = (e) => {
@@ -1693,6 +1539,7 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
             const live = (voiceState.transcript + ' ' + interim).trim();
             if (live) setVoiceStatus(t('voiceListening') + ' «' + live + '»');
         };
+        
         rec.onerror = (ev) => {
             if (token !== voiceState.pressToken) return;
             if (ev.error === 'aborted' || ev.error === 'no-speech') return;
@@ -1704,12 +1551,14 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
                 updateVoiceButtonUI();
             }
         };
+
         rec.onend = () => {
             if (token !== voiceState.pressToken) return;
             if (voiceState.holding) {
-                try { rec.start(); } catch (e) { /* ignore */ }
+                stopNameListeningAndSave(); // الحفظ التلقائي عند انتهاء الكلام
             }
         };
+
         try {
             rec.start();
         } catch (e) {
@@ -1720,13 +1569,13 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
     }
 
     async function stopNameListeningAndSave() {
+        if (!voiceState.holding && !voiceState.recognition) return;
         voiceState.holding = false;
         const token = voiceState.pressToken;
         abortRecognition();
         updateVoiceButtonUI();
         await new Promise(r => setTimeout(r, 150));
-        if (token !== voiceState.pressToken) return;
-
+        
         const name = cleanSpokenName(voiceState.transcript);
         if (!name) {
             setVoiceStatus(t('voiceEmptyAnswer'), 6000);
@@ -1742,15 +1591,7 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         const id = existing ? existing.id : nextId();
         const uid = 'u' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
         patients.push({
-            uid,
-            id,
-            name,
-            phone: '',
-            date: '',
-            proc: '',
-            due: 0,
-            paid: 0,
-            teeth: []
+            uid, id, name, phone: '', date: '', proc: '', due: 0, paid: 0, teeth: []
         });
         persist();
         renderSchedule();
@@ -1759,54 +1600,8 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         setVoiceStatus(t('voiceDone') + ': ' + name + ' ' + t('markTeethHint'), 8000);
     }
 
-    (function bindVoiceBtnContext() {
-        const btn = document.getElementById('voiceBtn');
-        if (btn) btn.addEventListener('contextmenu', e => e.preventDefault());
-    })();
-
-    // ── Date helpers + Good Morning (TTS only, no modal) ──────────────
     function sameCalendarDay(a, b) {
-        return a.getFullYear() === b.getFullYear()
-            && a.getMonth() === b.getMonth()
-            && a.getDate() === b.getDate();
-    }
-
-    function parsePatientDate(dateStr) {
-        if (!dateStr) return null;
-        const s = String(dateStr).trim();
-        if (!s) return null;
-
-        let d = new Date(s);
-        if (!isNaN(d.getTime())) return d;
-
-        let m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:[^\d]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|ص|م)?)?/i);
-        if (m) {
-            let day = parseInt(m[1], 10);
-            let month = parseInt(m[2], 10) - 1;
-            let year = parseInt(m[3], 10);
-            if (year < 100) year += 2000;
-            let hour = m[4] != null ? parseInt(m[4], 10) : 0;
-            let min = m[5] != null ? parseInt(m[5], 10) : 0;
-            const sec = m[6] != null ? parseInt(m[6], 10) : 0;
-            const ap = (m[7] || '').toLowerCase();
-            if (ap === 'pm' || ap === 'م') { if (hour < 12) hour += 12; }
-            if (ap === 'am' || ap === 'ص') { if (hour === 12) hour = 0; }
-            d = new Date(year, month, day, hour, min, sec);
-            if (!isNaN(d.getTime())) return d;
-        }
-
-        m = s.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2}))?/);
-        if (m) {
-            d = new Date(
-                parseInt(m[1], 10),
-                parseInt(m[2], 10) - 1,
-                parseInt(m[3], 10),
-                m[4] != null ? parseInt(m[4], 10) : 0,
-                m[5] != null ? parseInt(m[5], 10) : 0
-            );
-            if (!isNaN(d.getTime())) return d;
-        }
-        return null;
+        return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
     }
 
     function formatTimeSpoken(d, raw) {
@@ -1838,14 +1633,11 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
                     const loc = now.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB');
                     const s = String(p.date);
                     if (s.includes(loc.split(',')[0]) || s.startsWith(loc)) isToday = true;
-                } catch (e) { /* ignore */ }
+                } catch (e) { }
             }
             if (!isToday) return;
             list.push({
-                ...p,
-                _date: parsed,
-                _timeLabel: formatTimeSpoken(parsed, p.date),
-                _sort: parsed ? parsed.getTime() : Number.MAX_SAFE_INTEGER
+                ...p, _date: parsed, _timeLabel: formatTimeSpoken(parsed, p.date), _sort: parsed ? parsed.getTime() : Number.MAX_SAFE_INTEGER
             });
         });
         list.sort((a, b) => a._sort - b._sort || String(a.name).localeCompare(String(b.name), lang === 'ar' ? 'ar' : 'en'));
@@ -1859,23 +1651,17 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         });
 
         if (lang === 'ar') {
-            if (!appts.length) {
-                return 'صباح الخير، اليوم تاريخ ' + dateStr + '. لا توجد مواعيد مسجّلة لليوم.';
-            }
+            if (!appts.length) return 'صباح الخير، اليوم تاريخ ' + dateStr + '. لا توجد مواعيد مسجّلة لليوم.';
             let s = 'صباح الخير، اليوم تاريخ ' + dateStr + '. لديك المواعيد التالية: ';
             appts.forEach((p, i) => {
-                const name = p.name || 'مريض';
-                const time = p._timeLabel;
-                s += 'الساعة ' + time + ' ' + name;
+                s += 'الساعة ' + p._timeLabel + ' ' + (p.name || 'مريض');
                 if (i < appts.length - 1) s += '، ';
                 else s += '.';
             });
             return s;
         }
 
-        if (!appts.length) {
-            return 'Good morning. Today is ' + dateStr + '. There are no appointments recorded for today.';
-        }
+        if (!appts.length) return 'Good morning. Today is ' + dateStr + '. There are no appointments recorded for today.';
         let s = 'Good morning. Today is ' + dateStr + '. Your appointments are: ';
         appts.forEach((p, i) => {
             s += 'at ' + p._timeLabel + ', ' + (p.name || 'Patient');
@@ -1897,7 +1683,6 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         setVoiceStatus(speech, 12000);
     }
 
-    // ── CSV ───────────────────────────────────────────────────────────
     function exportCSV() {
         const headers = ['id', 'name', 'phone', 'date', 'proc', 'due', 'paid', 'teeth'];
         const rows = patients.map(p => [
@@ -1965,7 +1750,6 @@ Rules: no long intro, no diagnosis, no drug dosages except "as prescribed". If p
         return result;
     }
 
-    // ── Calculator ────────────────────────────────────────────────────
     function cl() { calcExpr = ''; document.getElementById('display').value = '0'; }
     function add(ch) {
         if (calcExpr === '0' && ch !== '.') calcExpr = '';
